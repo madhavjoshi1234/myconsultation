@@ -1,0 +1,125 @@
+ body {
+     font-family: Arial, sans-serif;
+     background-color: #f4f4f4;
+     display: flex;
+     justify-content: center;
+     align-items: center;
+     min-height: 100vh;
+     margin: 0;
+     padding: 10px;
+     box-sizing: border-box;
+ }
+ 
+ .container {
+     background-color: #fff;
+     padding: 10px 20px; /* Reduced top and bottom padding */
+     border-radius: 8px;
+     box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+     width: 100%;
+     max-width: 450px;
+ }
+ 
+ h1 {
+     text-align: center;
+     color: #333;
+     margin-top: 5px; /* Reduced margin above h1 */
+     margin-bottom: 7.5px; /* Reduced margin below h1 by 50% */
+ }
+ 
+ .form-group {
+     margin-bottom: 15px;
+    display: flex; /* Arrange label and input side-by-side */
+    align-items: center; /* Vertically align items in the middle */
+    flex-wrap: wrap; /* Allow wrapping if space is tight, though less likely here */
+ }
+ 
+ .form-group label {
+    /* display: block; */ /* No longer needed with flex */
+    /* margin-bottom: 5px; */ /* No longer needed with flex */
+     color: #555;
+     font-weight: bold;
+    margin-right: 10px; /* Space between label and input */
+    flex-basis: 120px; /* Give label a fixed basis width */
+    flex-shrink: 0; /* Prevent label from shrinking */
+ }
+ 
+ .form-group input[type="text"],
+ .form-group input[type="email"],
+ .form-group input[type="tel"],
+ .form-group input[type="password"] {
+    /* width: 100%; */ /* Flex will handle width */
+    flex-grow: 1; /* Allow input to take remaining space */
+     padding: 10px;
+     border: 1px solid #aaa; /* Made border darker */
+     border-radius: 4px;
+     box-sizing: border-box;
+     font-size: 16px;
+ }
+ 
+ .form-group input:focus {
+     outline: none;
+     border-color: #007bff;
+     box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+ }
+ 
+ .submit-btn {
+     width: 100%;
+     padding: 12px;
+     background-color: #007bff;
+     color: white;
+     border: none;
+     border-radius: 4px;
+     cursor: pointer;
+     font-size: 16px;
+     font-weight: bold;
+     transition: background-color 0.3s ease;
+ }
+ 
+ .submit-btn:hover {
+     background-color: #0056b3;
+ }
+ 
+ .message-area {
+     margin-top: 5px; /* Further reduced space above the message area by 50% */
+     padding: 10px;
+     border-radius: 4px;
+     text-align: center;
+ }
+ 
+ .message-area.success {
+     background-color: #d4edda;
+     color: #155724;
+     border: 1px solid #c3e6cb;
+ }
+ 
+ .message-area.error {
+     background-color: #f8d7da;
+     color: #721c24;
+     border: 1px solid #f5c6cb;
+ }
+ .message-area.info {
+     background-color: #d1ecf1;
+     color: #0c5460;
+     border: 1px solid #bee5eb;
+ }
+
+ /* Action buttons for dashboards if needed */
+.action-btn { /* General class if you plan to add more buttons */
+    padding: 5px 10px;
+    margin-right: 5px;
+    border-radius: 3px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 0.9em;
+}
+.view-food-plan-btn { background-color: #007bff; } /* Blue, consistent with admin */
+.view-food-plan-btn:hover { background-color: #0056b3; }
+
+/* --- Cursor for Disabled Elements --- */
+button[disabled],
+input[disabled],
+textarea[disabled],
+select[disabled] {
+    cursor: not-allowed !important;
+}

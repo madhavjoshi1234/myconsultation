@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Registration</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Register for Consultation</h1>
+        <div id="message" class="message-area"></div> <!-- Moved message area here -->
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="first_name">First Name:</label>
+                <input type="text" id="first_name" name="first_name" required autocomplete="given-name">
+            </div>
+            <div class="form-group">
+                <label for="last_name">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+            <div class="form-group">
+                <label for="mobile_number">Mobile Number:</label>
+                <input type="tel" id="mobile_number" name="mobile_number" required autocomplete="tel">
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label for="password">Password (min. 6 characters):</label>
+                <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password">
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password:</label>
+                <input type="password" id="confirm_password" name="confirm_password" required minlength="6" autocomplete="new-password">
+            </div>
+            <button type="submit" class="submit-btn">Register</button>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const messageDiv = document.getElementById('message');
+
+            if (password !== confirmPassword) {
+                messageDiv.textContent = 'Error: Passwords do not match.';
+                messageDiv.className = 'message-area error';
+                return; // Stop submission
+            }
+
+            const formData = {
+                first_name: document.getElementById('first_name').value,
+                last_name: document.getElementById('last_name').value,
+                mobile_number: document.getElementById('mobile_number').value,
+                email: document.getElementById('email').value,
+                password: password, // Use the validated password
+            };
+
+            messageDiv.textContent = 'Processing...';
+            messageDiv.className = 'message-area info';
+            
+
+            try {
+                const response = await fetch('register', { // Relative URL, assumes served from same domain
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    const registeredEmail = formData.email; // Get the email used for registration
+                    messageDiv.textContent = result.message + (result.client_id ? `. Your Client ID is ${result.client_id}. Please check your email for OTP and further instructions.` : '') +
+                                             ` You will be redirected to the OTP verification page shortly.`;
+                    messageDiv.className = 'message-area success';
+                    // Redirect to OTP verification page after a short delay, passing the email
+                    setTimeout(() => {
+                        window.location.href = `verify-otp.html?email=${encodeURIComponent(registeredEmail)}`;
+                    }, 3000); // 3-second delay
+                } else {
+                    messageDiv.textContent = 'Error: ' + (result.error || 'Registration failed. Please try again.');
+                    messageDiv.className = 'message-area error';
+                }
+            } catch (error) {
+                console.error('Network or other error:', error);
+                messageDiv.textContent = 'An error occurred. Please check your connection and try again.';
+                messageDiv.className = 'message-area error';
+            }
+        });
+    </script>
+</body>
+</html>

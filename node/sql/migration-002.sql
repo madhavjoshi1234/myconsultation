@@ -1,0 +1,1 @@
+ALTER TABLE users ADD column `password_reset_expires_at` datetime DEFAULT NULL;

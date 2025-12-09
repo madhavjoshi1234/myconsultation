@@ -1,0 +1,31 @@
+<style>
+    /*
+     * Client-specific Navbar Theme
+     * This style block is loaded along with the navbar HTML to ensure
+     * the client-side navigation has a distinct green look.
+    */
+    .main-navbar.client-navbar-theme {
+        background-color: #28a745 !important; /* A pleasant, distinct green */
+    }
+
+    .main-navbar.client-navbar-theme ul li a {
+        color: white !important;
+    }
+
+    .main-navbar.client-navbar-theme ul li a:hover,
+    .main-navbar.client-navbar-theme ul li a.active {
+        background-color: #218838 !important; /* A darker green for hover/active states */
+    }
+</style>
+<nav class="main-navbar client-navbar-theme">
+    <ul>
+        <li><a href="client-dashboard.html">Dashboard</a></li>
+        <li><a href="client-personal-details-form.html">Personal Details</a></li>
+        <li><a href="client-blood-tests-form.html">Blood Tests</a></li>
+        <li><a href="client-food-plan.html">Food Plan</a></li>
+        <li><a href="client-medical-history-form.html">Medical History</a></li>
+        <li><a href="compare.html?clientId=me">History</a></li>
+        <li><a href="https://sevenpointfourtest.pages.dev/">Website</a></li>
+        <li><a href="#" id="logoutButton">Logout</a></li>
+    </ul>
+</nav>

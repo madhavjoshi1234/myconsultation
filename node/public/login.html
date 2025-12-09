@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Unified Login for Admin, Staff, and Client</h1>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="submit-btn">Login</button>
+        </form>
+        <form id="otpForm" style="display:none;">
+            <p>An OTP has been sent to your email. Please enter it below.</p>
+            <div class="form-group">
+                <label for="otp">OTP:</label>
+                <input type="text" id="otp" name="otp" required minlength="6" maxlength="6">
+            </div>
+            <button type="submit" class="submit-btn">Login with OTP</button>
+        </form>
+        <div id="message" class="message-area"></div>
+        <div id="roleSelectionContainer" style="text-align: center; margin-top: 20px; display: none;">
+            <!-- Role selection buttons will be inserted here -->
+        </div>
+        <div id="standardLinks" style="text-align: center; margin-top: 15px;">
+            <p><a href="forgot-password.html">Forgot Password?</a></p>
+            <p><a href="#" id="otpLoginLink">Client Login with OTP</a></p>
+            <p style="display:none;"><a href="#" id="passwordLoginLink">Login with Password</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+            const submitBtn = this.querySelector('.submit-btn');
+
+            if (submitBtn.textContent === 'Send Login OTP') {
+                messageDiv.textContent = 'Sending OTP...';
+                messageDiv.className = 'message-area info';
+
+                try {
+                    const response = await fetch('api/client/login-otp/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email })
+                    });
+                    const result = await response.json();
+                    messageDiv.textContent = result.message;
+                    messageDiv.className = 'message-area success';
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('otpForm').style.display = 'block';
+                } catch (error) {
+                    messageDiv.textContent = 'Failed to send OTP. Please try again.';
+                    messageDiv.className = 'message-area error';
+                }
+            } else {
+                messageDiv.textContent = 'Processing...';
+                messageDiv.className = 'message-area info';
+
+                try {
+                    const response = await fetch('api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        const roles = result.roles || [];
+                        const isClient = roles.includes('client');
+                        const staffRoles = roles.filter(r => r === 'nutritionist' || r === 'executive');
+                        const isAdmin = roles.includes('admin');
+                        
+                        if (isAdmin) {
+                            localStorage.setItem('adminToken', result.token);
+                            window.location.href = 'admin.html';
+                        } else if (isClient && staffRoles.length > 0) {
+                            // User is both client and staff, show role selection
+                            displayRoleSelection(['client', ...staffRoles], result.token);
+                        } else if (isClient) {
+                            // User is only a client
+                            localStorage.setItem('clientToken', result.token);
+                            window.location.href = 'client-dashboard.html';
+                        } else if (staffRoles.length > 0) {
+                            // User is only staff
+                            localStorage.setItem('staffToken', result.token);
+                            if (staffRoles.length > 1) {
+                                displayRoleSelection(staffRoles, result.token);
+                            } else {
+                                const role = staffRoles[0];
+                                localStorage.setItem('selectedRole', role);
+                                window.location.href = role === 'nutritionist' ? 'nutritionist-dashboard.html' : 'executive-dashboard.html';
+                            }
+                        } else {
+                            messageDiv.textContent = 'Error: No recognized role found for this user.';
+                            messageDiv.className = 'message-area error';
+                        }
+                    } else {
+                        messageDiv.textContent = 'Error: ' + (result.error || 'Login failed.');
+                        messageDiv.className = 'message-area error';
+                    }
+                } catch (error) {
+                    messageDiv.textContent = 'An error occurred. Please try again.';
+                    messageDiv.className = 'message-area error';
+                }
+            }
+        });
+
+        function displayRoleSelection(roles, token) {
+            const loginForm = document.getElementById('loginForm');
+            const messageDiv = document.getElementById('message');
+            const roleSelectionContainer = document.getElementById('roleSelectionContainer');
+            const standardLinks = document.getElementById('standardLinks');
+
+            loginForm.style.display = 'none';
+            standardLinks.style.display = 'none';
+
+            messageDiv.textContent = 'Login successful! Please select a role to continue.';
+            messageDiv.className = 'message-area success';
+            roleSelectionContainer.style.display = 'block';
+            roleSelectionContainer.innerHTML = '<h2>Select Your Role for this Session</h2>';
+
+            roles.forEach(role => {
+                const button = document.createElement('button');
+                button.textContent = `Login as ${role.charAt(0).toUpperCase() + role.slice(1)}`;
+                button.className = 'submit-btn';
+                button.style.margin = '5px';
+                button.onclick = function() {
+                    if (role === 'client') {
+                        localStorage.setItem('clientToken', token);
+                        window.location.href = 'client-dashboard.html';
+                    } else { // It's a staff role
+                        localStorage.setItem('staffToken', token);
+                        localStorage.setItem('selectedRole', role);
+                        window.location.href = role === 'nutritionist' ? 'nutritionist-dashboard.html' : 'executive-dashboard.html';
+                    }
+                };
+                roleSelectionContainer.appendChild(button);
+            });
+        }
+ 
+        document.getElementById('otpLoginLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelector('label[for="password"]').parentElement.style.display = 'none';
+            document.getElementById('password').required = false;
+            document.querySelector('#loginForm .submit-btn').textContent = 'Send Login OTP';
+            this.parentElement.style.display = 'none';
+            document.getElementById('passwordLoginLink').parentElement.style.display = 'block';
+        });
+ 
+        document.getElementById('passwordLoginLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('password').required = true;
+            document.querySelector('label[for="password"]').parentElement.style.display = 'flex';
+            document.querySelector('#loginForm .submit-btn').textContent = 'Login';
+ 
+            this.parentElement.style.display = 'none';
+            document.getElementById('otpLoginLink').parentElement.style.display = 'block';
+ 
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('otpForm').style.display = 'none';
+        });
+
+        document.getElementById('otpForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value; // Email is still in the hidden form
+            const otp = document.getElementById('otp').value;
+            const messageDiv = document.getElementById('message');
+
+            messageDiv.textContent = 'Verifying OTP...';
+            messageDiv.className = 'message-area info';
+
+            try {
+                const response = await fetch('api/client/login-otp/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, otp })
+                });
+                const result = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('clientToken', result.token);
+                    window.location.href = 'client-dashboard.html';
+                } else {
+                    messageDiv.textContent = 'Error: ' + (result.error || 'Login failed.');
+                    messageDiv.className = 'message-area error';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'An error occurred. Please try again.';
+                messageDiv.className = 'message-area error';
+            }
+        });
+    </script>
+</body>
+</html>

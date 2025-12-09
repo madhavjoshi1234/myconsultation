@@ -1,0 +1,1 @@
+ALTER TABLE clients ADD column `password_reset_expires_at` datetime DEFAULT NULL;

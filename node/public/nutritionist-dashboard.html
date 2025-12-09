@@ -1,0 +1,697 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Nutritionist Dashboard</title>
+     <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
+     <link rel="stylesheet" href="admin_style.css">
+     <script src="js/bloodTestDefinitions.js"></script>
+     <style>
+        /* Style for readonly textareas in the food plan modal */
+        .hourly-plan-table textarea[readonly] {
+            background-color: #f0f0f0; /* Light grey for readonly fields */
+            color: #555; /* Darker text for readability */
+            cursor: not-allowed;
+        }
+     </style>
+ </head>
+ <body>
+     <header class="navbar">
+         <div class="navbar-brand">Nutritionist Dashboard</div>
+         <nav class="navbar-links">
+             <ul>
+                 <li><a href="nutritionist-dashboard.html" class="active">My Clients</a></li>
+                 <li><a href="nutritionist-statistics.html">Statistics</a></li>
+                 <li><button id="logoutButton" class="nav-logout-btn">Logout</button></li>
+             </ul>
+         </nav>
+     </header>
+ 
+     <main class="admin-container">
+         <section id="assigned-clients" class="management-section">
+             <h2>Search My Assigned Clients</h2>
+             <div class="search-container" style="margin-bottom: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 5px; background-color: #fdfdfd;">
+                 <form id="searchMyClientsForm" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                     <div class="form-group" style="flex-grow: 1; min-width: 120px;">
+                         <label for="search_client_id_nutri" style="flex-basis: auto; margin-bottom: 5px;">Client ID:</label>
+                         <input type="text" id="search_client_id_nutri" name="client_id" style="width: 100%;">
+                     </div>
+                     <div class="form-group" style="flex-grow: 1; min-width: 150px;">
+                         <label for="search_first_name_nutri" style="flex-basis: auto; margin-bottom: 5px;">First Name:</label>
+                         <input type="text" id="search_first_name_nutri" name="first_name" style="width: 100%;">
+                     </div>
+                     <div class="form-group" style="flex-grow: 1; min-width: 150px;">
+                         <label for="search_last_name_nutri" style="flex-basis: auto; margin-bottom: 5px;">Last Name:</label>
+                         <input type="text" id="search_last_name_nutri" name="last_name" style="width: 100%;">
+                     </div>
+                     <div class="form-group" style="flex-grow: 1; min-width: 180px;">
+                         <label for="search_email_nutri" style="flex-basis: auto; margin-bottom: 5px;">Email:</label>
+                         <input type="email" id="search_email_nutri" name="email" style="width: 100%;">
+                     </div>
+                     <button type="submit" class="submit-btn" style="align-self: flex-end;">Search</button>
+                     <button type="button" id="clearSearchMyClientsBtn" class="submit-btn" style="align-self: flex-end; background-color: #6c757d;">Clear</button>
+                 </form>
+             </div>
+             <h2>My Assigned Clients</h2>
+             <table id="clientsTable">
+                 <thead>
+                     <tr>
+                         <th>ID</th>
+                         <th>Name</th>
+                         <th>Email</th>
+                         <th>Mobile</th>
+                     </tr>
+                 </thead>
+                 <tbody id="clientsTableBody">
+                     <!-- Client rows will be populated by JavaScript -->
+                 </tbody>
+             </table>
+             <div id="listClientsMessage" class="message-area"></div>
+         </section>
+     </main>
+ 
+     <!-- Modal for Viewing Client Biodata -->
+     <div id="viewClientBiodataModal" class="modal" style="display: none;">
+         <div class="modal-content" style="max-width: 800px;">
+             <span class="close-btn" id="closeViewClientBiodataModalBtn">&times;</span>
+             <h3 id="viewClientBiodataModalTitle">Client Personal Details</h3>
+             <div id="viewClientBiodataContent" class="read-only-grid-display"></div>
+             <div id="viewClientBiodataMessage" class="message-area"></div>
+         </div>
+     </div>
+ 
+     <!-- Modal for Viewing Client Medical History -->
+     <div id="viewClientMedicalHistoryModal" class="modal" style="display: none;">
+         <div class="modal-content" style="max-width: 800px;">
+             <span class="close-btn" id="closeViewClientMedicalHistoryModalBtn">&times;</span>
+             <h3 id="viewClientMedicalHistoryModalTitle">Client Medical History</h3>
+             <h4>Family Medical History</h4>
+             <div id="viewFamilyMedicalHistory" class="read-only-display"></div>
+             <h4>Medications</h4>
+             <table class="medications-table-readonly">
+                 <thead>
+                     <tr>
+                         <th>Diagnosis</th>
+                         <th>Medicine Name</th>
+                         <th>Power</th>
+                         <th>Timing</th>
+                         <th>Since When</th>
+                     </tr>
+                 </thead>
+                 <tbody id="viewClientMedicationsTableBody"></tbody>
+             </table>
+             <div id="viewClientMedicalHistoryMessage" class="message-area"></div>
+         </div>
+     </div>
+ 
+     <!-- Modal for Viewing Client Blood Tests -->
+     <div id="viewClientBloodTestsModal" class="modal" style="display: none;">
+         <div class="modal-content" style="max-width: 950px;">
+             <span class="close-btn" id="closeViewClientBloodTestsModalBtn">&times;</span>
+             <h3 id="viewClientBloodTestsModalTitle">Client Blood Test Results</h3>
+             <div id="viewClientBloodTestReportDates" style="margin-bottom: 15px; font-weight: bold;"></div>
+             <div id="viewClientBloodTestsTableContainer" class="test-table"></div>
+             <div id="viewClientBloodTestsMessage" class="message-area"></div>
+         </div>
+     </div>
+ 
+     <!-- Modal for Client Food Plan (Editable by Nutritionist - No CKEditor for hourly) -->
+     <div id="clientFoodPlanModal" class="modal" style="display: none;">
+         <div class="modal-content" style="max-width: 900px;">
+             <span class="close-btn" id="closeClientFoodPlanModalBtn">&times;</span>
+             <h3 id="clientFoodPlanModalTitle">Manage Client Food Plan</h3>
+             <form id="clientFoodPlanEditForm">
+                 <input type="hidden" id="editing_client_id_for_food_plan">
+                 <h4>Hourly Food Plan</h4>
+                 <table class="hourly-plan-table">
+                     <thead>
+                         <tr>
+                             <th class="time-column">Time</th>
+                             <th>Present Intake</th>
+                             <th>Proposed Structure</th>
+                             <th>Additional Points</th>
+                         </tr>
+                     </thead>
+                     <tbody id="clientFoodPlanHourlyTableBody"></tbody>
+                 </table>
+                 <div class="form-group" style="margin-top: 20px;">
+                     <label for="clientFoodPlanPersonalRecommendations">Additional Personal Recommendations (for this client):</label>
+                     <textarea id="clientFoodPlanPersonalRecommendations" name="additional_personal_recommendations" rows="5"></textarea>
+                 </div>
+                 <div class="form-group" style="margin-top: 20px;">
+                     <label>General Admin Recommendations (for context - read-only):</label>
+                     <div id="clientFoodPlanGeneralAdminRecommendationsDisplay" class="read-only-display">Loading...</div>
+                 </div>
+                 <button type="submit" class="submit-btn">Save Client Food Plan</button>
+             </form>
+             <div id="clientFoodPlanMessage" class="message-area"></div>
+         </div>
+     </div>
+ 
+     <script>
+         const staffToken = localStorage.getItem('staffToken');
+         const selectedRole = localStorage.getItem('selectedRole');
+
+         if (!staffToken) {
+             window.location.href = 'login.html';
+         }
+
+         // Verify role from token or selected role
+         if (selectedRole !== 'nutritionist') {
+             try {
+                 const decodedToken = JSON.parse(atob(staffToken.split('.')[1]));
+                 if (!decodedToken.roles || !decodedToken.roles.includes('nutritionist')) {
+                     alert('Access denied. Not a nutritionist.');
+                     localStorage.removeItem('staffToken');
+                     localStorage.removeItem('selectedRole');
+                     window.location.href = 'login.html';
+                 }
+             } catch (e) {
+                 console.error("Error decoding token:", e);
+                 localStorage.removeItem('staffToken');
+                 localStorage.removeItem('selectedRole');
+                 window.location.href = 'login.html';
+             }
+         }
+ 
+ 
+         const clientsTableBody = document.getElementById('clientsTableBody');
+         const listClientsMessageDiv = document.getElementById('listClientsMessage');
+         const logoutButton = document.getElementById('logoutButton');
+         const searchMyClientsForm = document.getElementById('searchMyClientsForm');
+         const clearSearchMyClientsBtn = document.getElementById('clearSearchMyClientsBtn');
+ 
+         // Modal Elements
+         const viewClientBiodataModal = document.getElementById('viewClientBiodataModal');
+         const viewClientBiodataModalTitle = document.getElementById('viewClientBiodataModalTitle');
+         const viewClientBiodataContentDiv = document.getElementById('viewClientBiodataContent');
+         const viewClientBiodataMessageDiv = document.getElementById('viewClientBiodataMessage');
+ 
+         const viewClientMedicalHistoryModal = document.getElementById('viewClientMedicalHistoryModal');
+         const viewClientMedicalHistoryModalTitle = document.getElementById('viewClientMedicalHistoryModalTitle');
+         const viewFamilyMedicalHistoryDiv = document.getElementById('viewFamilyMedicalHistory');
+         const viewClientMedicationsTableBody = document.getElementById('viewClientMedicationsTableBody');
+         const viewClientMedicalHistoryMessageDiv = document.getElementById('viewClientMedicalHistoryMessage');
+ 
+         const viewClientBloodTestsModal = document.getElementById('viewClientBloodTestsModal');
+         const viewClientBloodTestsModalTitle = document.getElementById('viewClientBloodTestsModalTitle');
+         const viewClientBloodTestReportDatesDiv = document.getElementById('viewClientBloodTestReportDates');
+         const viewClientBloodTestsTableContainer = document.getElementById('viewClientBloodTestsTableContainer');
+         const viewClientBloodTestsMessageDiv = document.getElementById('viewClientBloodTestsMessage');
+ 
+         const clientFoodPlanModal = document.getElementById('clientFoodPlanModal');
+         const clientFoodPlanModalTitle = document.getElementById('clientFoodPlanModalTitle');
+         const clientFoodPlanEditForm = document.getElementById('clientFoodPlanEditForm');
+         const clientFoodPlanHourlyTableBody = document.getElementById('clientFoodPlanHourlyTableBody');
+         const clientFoodPlanPersonalRecommendationsTextarea = document.getElementById('clientFoodPlanPersonalRecommendations');
+         const clientFoodPlanGeneralAdminRecommendationsDisplay = document.getElementById('clientFoodPlanGeneralAdminRecommendationsDisplay');
+         const clientFoodPlanMessageDiv = document.getElementById('clientFoodPlanMessage');
+         // let clientFoodPlanEditors = {}; // CKEditor no longer used for hourly plan on this page
+ 
+         // Note: The HTML entities like &lt; and &gt; in the 'range' properties above are intentional.
+         // They are used so that characters like '<' or '>' are displayed correctly as text in the HTML,
+         // rather than being interpreted as HTML tags.
+ 
+         function showMessage(element, message, type) {
+             element.textContent = message;
+             element.className = `message-area ${type}`;
+         }
+ 
+         async function fetchWithAuth(url, options = {}) {
+             const defaultHeaders = {
+                 'Authorization': `Bearer ${staffToken}`,
+                 'Content-Type': 'application/json'
+             };
+ 
+             const config = {
+                 ...options,
+                 headers: {
+                     ...defaultHeaders,
+                     ...options.headers,
+                 }
+             };
+ 
+             const response = await fetch(url, config);
+ 
+             if (response.ok) {
+                 return response;
+             }
+ 
+             // Handle errors
+             const isJson = response.headers.get('content-type')?.includes('application/json');
+             let errorData = isJson ? await response.json().catch(() => ({})) : {};
+ 
+             if (response.status === 403 || response.status === 401) {
+                 if (errorData.error && errorData.error.includes('Token verification failed')) {
+                     localStorage.removeItem('staffToken');
+                     localStorage.removeItem('selectedRole');
+                     alert('Your session has expired or is invalid. Please log in again.');
+                     window.location.href = 'staff-login.html';
+                     throw new Error('SESSION_EXPIRED'); // Special error to prevent further processing
+                 }
+             }
+ 
+             throw new Error(errorData.error || `Request failed with status ${response.status}`);
+         }
+ 
+         async function fetchAssignedClients(queryParams = '') {
+             showMessage(listClientsMessageDiv, 'Loading clients...', 'info');
+             let url = 'api/nutritionist/my-clients';
+             const isSearch = !!queryParams;
+             if (isSearch) {
+                url = `api/nutritionist/my-clients/search?${queryParams}`;
+             }
+             try {
+                 const response = await fetchWithAuth(url);
+                 let clients = await response.json();
+
+                 const urlParams = new URLSearchParams(window.location.search);
+                 const filter = urlParams.get('filter');
+                 let filterMessage = '';
+
+                 if (filter && !isSearch) {
+                     if (filter === 'all_assigned') {
+                         filterMessage = `Showing all ${clients.length} assigned client(s).`;
+                     } else if (filter === 'final_history_submitted') {
+                         clients = clients.filter(client => client.is_finalized);
+                         filterMessage = `Showing ${clients.length} client(s) who have submitted final history.`;
+                     } else if (filter === 'food_plan_suggested') {
+                         clients = clients.filter(client => client.has_food_plan_suggested);
+                         filterMessage = `Showing ${clients.length} client(s) with a suggested food plan.`;
+                     } else if (filter === 'food_plan_sent') {
+                         clients = clients.filter(client => client.is_food_plan_complete);
+                         filterMessage = `Showing ${clients.length} client(s) who have been sent a food plan.`;
+                     }
+                 }
+
+                 populateClientsTable(clients);
+
+                 if (filterMessage) {
+                     showMessage(listClientsMessageDiv, filterMessage, 'info');
+                 } else if (clients.length > 0) {
+                     showMessage(listClientsMessageDiv, isSearch ? `Found ${clients.length} client(s).` : '', 'info');
+                 } else {
+                     showMessage(listClientsMessageDiv, isSearch ? 'No clients found matching your search.' : 'No clients assigned to you.', 'info');
+                 }
+             } catch (error) {
+                 console.error('Error in fetchAssignedClients:', error);
+                 if (error.message !== 'SESSION_EXPIRED') {
+                     showMessage(listClientsMessageDiv, `Error: ${error.message}`, 'error');
+                 }
+             }
+         }
+ 
+         function populateClientsTable(clients) {
+             clientsTableBody.innerHTML = '';
+             if (!clients || clients.length === 0) {
+                 clientsTableBody.innerHTML = '<tr><td colspan="4">No clients assigned.</td></tr>';
+                 return;
+             }
+             clients.forEach(client => {
+                 const dataRow = clientsTableBody.insertRow();
+                 dataRow.innerHTML = `
+                     <td>${client.client_id}</td>
+                     <td>${client.first_name} ${client.last_name}</td>
+                     <td>${client.email}</td>
+                     <td>${client.mobile_number || 'N/A'}</td>`;
+
+                const actionsRow = clientsTableBody.insertRow();
+                actionsRow.classList.add('client-actions-row');
+                const actionsCell = actionsRow.insertCell();
+                actionsCell.colSpan = 4;
+                actionsCell.innerHTML = `
+                         <div class="client-action-buttons-horizontal">
+                             <button class="action-btn view-biodata-btn" data-id="${client.client_id}">Biodata</button>
+                             <button class="action-btn view-medical-history-btn" data-id="${client.client_id}">Med History</button>
+                             <!-- <button class="action-btn view-blood-tests-btn" data-id="${client.client_id}">Blood Tests</button> -->
+                             <button class="action-btn view-food-plan-btn" data-id="${client.client_id}">Manage Food Plan</button>
+                             <button class="action-btn view-follow-ups-btn" data-id="${client.client_id}">History</button>
+                         </div>
+                 `;
+             });
+         }
+ 
+         clientsTableBody.addEventListener('click', async function(event) {
+             const target = event.target.closest('.action-btn');
+             if (!target) return;
+             const clientId = target.dataset.id;
+ 
+             if (target.classList.contains('view-biodata-btn')) {
+                 openViewClientBiodataModal(clientId);
+             } else if (target.classList.contains('view-medical-history-btn')) {
+                 openViewClientMedicalHistoryModal(clientId);
+             } else if (target.classList.contains('view-blood-tests-btn')) {
+                 openViewClientBloodTestsModal(clientId);
+             } else if (target.classList.contains('view-food-plan-btn')) {
+                 openClientFoodPlanModal(clientId);
+             } else if (target.classList.contains('view-follow-ups-btn')) {
+                 window.location.href = `compare.html?clientId=${clientId}`;
+             }
+         });
+ 
+         // --- Modal Opening Functions (adapted from admin.html) ---
+         async function openViewClientBiodataModal(clientId) {
+             viewClientBiodataModalTitle.textContent = `Personal Details for Client ID: ${clientId}`;
+             showMessage(viewClientBiodataMessageDiv, 'Loading...', 'info');
+             viewClientBiodataModal.style.display = 'block';
+             viewClientBiodataContentDiv.innerHTML = '';
+             try {
+                const response = await fetchWithAuth(`api/staff/clients/${clientId}/personal-details`);
+                const data = await response.json();
+                 let contentHtml = '';
+                 for (const key in data) {
+                     if (data.hasOwnProperty(key)) {
+                         let value = data[key];
+                         const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                         if (key.includes('date') && value) value = new Date(value).toLocaleDateString();
+                         else if (typeof value === 'boolean') value = value ? 'Yes' : 'No';
+                         else if (value === null || value === undefined || value === '') value = 'N/A';
+                         contentHtml += `<div class="data-pair"><span class="data-label">${label}:</span><span class="data-value">${value}</span></div>`;
+                     }
+                 }
+                 viewClientBiodataContentDiv.innerHTML = contentHtml;
+                 showMessage(viewClientBiodataMessageDiv, 'Loaded.', 'info');
+             } catch (error) {
+                 if (error.message !== 'SESSION_EXPIRED') {
+                     showMessage(viewClientBiodataMessageDiv, error.message, 'error');
+                 }
+             }
+         }
+ 
+         async function openViewClientMedicalHistoryModal(clientId) {
+             viewClientMedicalHistoryModalTitle.textContent = `Medical History for Client ID: ${clientId}`;
+             showMessage(viewClientMedicalHistoryMessageDiv, 'Loading...', 'info');
+             viewClientMedicalHistoryModal.style.display = 'block';
+             viewFamilyMedicalHistoryDiv.innerHTML = '';
+             viewClientMedicationsTableBody.innerHTML = '';
+             try {
+                const response = await fetchWithAuth(`api/staff/clients/${clientId}/medical-history/latest`);
+                const data = await response.json();
+                 if (data.message && data.message.includes("No medical history found")) {
+                     showMessage(viewClientMedicalHistoryMessageDiv, data.message, 'info');
+                 } else {
+                     viewFamilyMedicalHistoryDiv.innerHTML = data.family_medical_history ? data.family_medical_history.replace(/\n/g, '<br>') : 'N/A';
+                     if (data.medications && data.medications.length > 0) {
+                         data.medications.forEach(med => {
+                             const row = viewClientMedicationsTableBody.insertRow();
+                             row.innerHTML = `<td>${med.diagnosis||'N/A'}</td><td>${med.medicine_name||'N/A'}</td><td>${med.power||'N/A'}</td><td>${med.timing||'N/A'}</td><td>${med.since_when||'N/A'}</td>`;
+                         });
+                     } else {
+                         viewClientMedicationsTableBody.innerHTML = '<tr><td colspan="5">No medications listed.</td></tr>';
+                     }
+                     showMessage(viewClientMedicalHistoryMessageDiv, 'Loaded.', 'info');
+                 }
+             } catch (error) {
+                 if (error.message !== 'SESSION_EXPIRED') {
+                     showMessage(viewClientMedicalHistoryMessageDiv, error.message, 'error');
+                 }
+             }
+         }
+ 
+         async function openViewClientBloodTestsModal(clientId) {
+             viewClientBloodTestsModalTitle.textContent = `Blood Tests for Client ID: ${clientId}`;
+             showMessage(viewClientBloodTestsMessageDiv, 'Loading...', 'info');
+             viewClientBloodTestsModal.style.display = 'block';
+             viewClientBloodTestReportDatesDiv.innerHTML = '';
+             viewClientBloodTestsTableContainer.innerHTML = '';
+             try {
+                const response = await fetchWithAuth(`api/staff/clients/${clientId}/blood-tests/latest`);
+                const data = await response.json();
+                 if (data.message && data.message.includes("No blood test reports found")) {
+                     showMessage(viewClientBloodTestsMessageDiv, data.message, 'info'); return;
+                 }
+                let table = buildReportsTable(data);
+                viewClientBloodTestsTableContainer.appendChild(table);
+                 showMessage(viewClientBloodTestsMessageDiv, 'Loaded.', 'info');
+             } catch (error) {
+                 if (error.message !== 'SESSION_EXPIRED') {
+                     showMessage(viewClientBloodTestsMessageDiv, error.message, 'error');
+                 }
+             }
+         }
+ 
+         function setFoodPlanFormReadOnly(isReadOnly) {
+             // The personal recommendations textarea
+             clientFoodPlanPersonalRecommendationsTextarea.disabled = isReadOnly;
+ 
+             // The hourly plan textareas
+             clientFoodPlanHourlyTableBody.querySelectorAll('textarea').forEach(textarea => {
+                 // The 'present_intake' is always readonly for the nutritionist.
+                 // We only toggle the 'proposed_structure' and 'additional_points' fields.
+                 if (textarea.name.startsWith('proposed_structure_') || textarea.name.startsWith('additional_points_')) {
+                     textarea.disabled = isReadOnly;
+                 }
+             });
+ 
+             // The save button
+             clientFoodPlanEditForm.querySelector('button[type="submit"]').disabled = isReadOnly;
+         }
+
+         // --- Client Food Plan Modal (Nutritionist - Editable, No CKEditor for hourly) ---
+         function generateTimeSlots() {
+             const slots = [];
+             for (let i = 0; i < 24; i++) {
+                 const hour = (6 + i) % 24;
+                 slots.push({
+                     formValue: `${String(hour).padStart(2, '0')}:00`,
+                     displayValue: `${String(hour % 12 || 12).padStart(2, '0')}:00 ${hour >= 12 ? 'PM' : 'AM'}`
+                 });
+             }
+             return slots;
+         }
+ 
+         async function openClientFoodPlanModal(clientId) {
+             document.getElementById('editing_client_id_for_food_plan').value = clientId;
+             clientFoodPlanModalTitle.textContent = `Manage Food Plan for Client ID: ${clientId}`;
+             showMessage(clientFoodPlanMessageDiv, 'Loading food plan...', 'info');
+             clientFoodPlanModal.style.display = 'block';
+ 
+             // Reset form to default editable state before loading
+             setFoodPlanFormReadOnly(false);
+ 
+             clientFoodPlanHourlyTableBody.innerHTML = ''; // Clear previous rows
+ 
+             const timeSlots = generateTimeSlots();
+             timeSlots.forEach(slot => {
+                 const row = clientFoodPlanHourlyTableBody.insertRow();
+                 const timeKey = slot.formValue.replace(':', '');
+                 row.innerHTML = `<td class="time-column">${slot.displayValue}</td>
+                     <td><textarea id="fp_present_intake_${timeKey}" name="present_intake_${timeKey}" readonly></textarea></td>
+                     <td><textarea id="fp_proposed_structure_${timeKey}" name="proposed_structure_${timeKey}"></textarea></td>
+                     <td><textarea id="fp_additional_points_${timeKey}" name="additional_points_${timeKey}"></textarea></td>`;
+             });
+             
+             // Check if the logged-in nutritionist is assigned to this client AFTER generating the form elements
+             try {
+                 const clientDetailsResponse = await fetchWithAuth(`api/staff/clients/${clientId}/personal-details`);
+                 const clientDetails = await clientDetailsResponse.json();
+                 const assignedNutritionistId = clientDetails.nutritionist_id;
+                 const decodedToken = JSON.parse(atob(staffToken.split('.')[1]));
+                 const loggedInNutritionistId = decodedToken.userId;
+ 
+                 if (loggedInNutritionistId !== assignedNutritionistId) {
+                     setFoodPlanFormReadOnly(true);
+                     clientFoodPlanModalTitle.textContent = `View Food Plan for Client ID: ${clientId}`;
+                 }
+             } catch (error) {
+                 if (error.message !== 'SESSION_EXPIRED') { showMessage(clientFoodPlanMessageDiv, `Could not verify edit permissions: ${error.message}`, 'error'); setFoodPlanFormReadOnly(true); }
+             }
+
+             // Clear personal recommendations textarea
+             clientFoodPlanPersonalRecommendationsTextarea.value = '';
+ 
+             try { // Fetch general admin recommendations
+                 const genRecResponse = await fetch('api/general-food-recommendations', { headers: { 'Authorization': `Bearer ${staffToken}` } });
+              const genRecData = await genRecResponse.json();
+                 if (!genRecResponse.ok) {
+                     if ((genRecResponse.status === 403 || genRecResponse.status === 401)) {
+                         if (genRecData.error && genRecData.error.includes('Token verification failed')) {
+                             localStorage.removeItem('staffToken');
+                             alert('Your session has expired or is invalid. Please log in again.');
+                             window.location.href = 'login.html';
+                             return;
+                         }
+                     }
+                     clientFoodPlanGeneralAdminRecommendationsDisplay.innerHTML = 'Error loading general recs.';
+                 } else {
+                 clientFoodPlanGeneralAdminRecommendationsDisplay.innerHTML = genRecData.recommendations || 'N/A';
+                 } } catch (error) { clientFoodPlanGeneralAdminRecommendationsDisplay.innerHTML = 'Error loading general recs.'; }
+ 
+             try { // Fetch client's latest food plan
+                 const response = await fetch(`api/staff/clients/${clientId}/food-plan/latest`, { headers: { 'Authorization': `Bearer ${staffToken}` } });
+                 const planData = await response.json();
+                 if (!response.ok) {
+                     if ((response.status === 403 || response.status === 401)) {
+                         if (planData.error && planData.error.includes('Token verification failed')) {
+                             localStorage.removeItem('staffToken');
+                             alert('Your session has expired or is invalid. Please log in again.');
+                             window.location.href = 'staff-login.html';
+                             return;
+                         }
+                     }
+                     throw new Error(planData.error || 'Failed to load plan');
+                 }
+ 
+                 if (planData.message && planData.message.includes("No food plan found")) {
+                    showMessage(clientFoodPlanMessageDiv, 'No existing food plan. Create a new one.', 'info');
+                    clientFoodPlanModal.scrollTop = clientFoodPlanModal.scrollHeight;
+                     clientFoodPlanPersonalRecommendationsTextarea.value = '';
+                     clientFoodPlanHourlyTableBody.querySelectorAll('textarea').forEach(ta => ta.value = '');
+                 } else {
+                     clientFoodPlanPersonalRecommendationsTextarea.value = planData.additional_personal_recommendations || '';
+                     
+                     planData.hourly_details.forEach(detail => {
+                         const timeKey = detail.time_slot.replace(':', '');
+                         const presentIntakeTextarea = document.getElementById(`fp_present_intake_${timeKey}`);
+                         if (presentIntakeTextarea) presentIntakeTextarea.value = detail.present_intake || '';
+                         
+                         const proposedStructureTextarea = document.getElementById(`fp_proposed_structure_${timeKey}`);
+                         if (proposedStructureTextarea) proposedStructureTextarea.value = detail.proposed_structure || '';
+ 
+                         const additionalPointsTextarea = document.getElementById(`fp_additional_points_${timeKey}`);
+                         if (additionalPointsTextarea) additionalPointsTextarea.value = detail.additional_points || '';
+                     });
+                     showMessage(clientFoodPlanMessageDiv, 'Client food plan loaded.', 'info');
+                    clientFoodPlanModal.scrollTop = clientFoodPlanModal.scrollHeight;
+                 }
+             } catch (error) {
+                 showMessage(clientFoodPlanMessageDiv, error.message, 'error');
+                 clientFoodPlanPersonalRecommendationsTextarea.value = '';
+                 clientFoodPlanHourlyTableBody.querySelectorAll('textarea').forEach(ta => ta.value = '');
+                clientFoodPlanModal.scrollTop = clientFoodPlanModal.scrollHeight;
+             }
+         }
+ 
+         clientFoodPlanEditForm.addEventListener('submit', async function(event) {
+             event.preventDefault();
+             const clientId = document.getElementById('editing_client_id_for_food_plan').value;
+             const dataToSend = { hourly_plan: {} };
+             
+             dataToSend.additional_personal_recommendations = clientFoodPlanPersonalRecommendationsTextarea.value;
+ 
+             const timeSlots = generateTimeSlots();
+             timeSlots.forEach(slot => {
+                 const timeKeyForBackend = slot.formValue;
+                 const timeKeyForEditorId = slot.formValue.replace(':', '');
+                 
+                 dataToSend.hourly_plan[timeKeyForBackend] = {
+                     present_intake: document.getElementById(`fp_present_intake_${timeKeyForEditorId}`)?.value || null,
+                     proposed_structure: document.getElementById(`fp_proposed_structure_${timeKeyForEditorId}`)?.value || null,
+                     additional_points: document.getElementById(`fp_additional_points_${timeKeyForEditorId}`)?.value || null
+                 };
+             });
+             showMessage(clientFoodPlanMessageDiv, 'Saving...', 'info');
+             try {
+                 const response = await fetch(`api/nutritionist/clients/${clientId}/food-plan`, {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${staffToken}` },
+                     body: JSON.stringify(dataToSend)
+                 });
+                if (!response.ok) {
+                    if ((response.status === 403 || response.status === 401)) {
+                        const errorResultCheck = await response.json().catch(() => ({}));
+                        if (errorResultCheck.error && errorResultCheck.error.includes('Token verification failed')) {
+                            localStorage.removeItem('staffToken');
+                            alert('Your session has expired or is invalid. Please log in again.');
+                            window.location.href = 'staff-login.html';
+                            return; 
+                        }
+                    }
+                    throw new Error((await response.json()).error || 'Failed to save');
+                }
+                const result = await response.json();
+                 showMessage(clientFoodPlanMessageDiv, result.message, 'success');
+                 // Scroll the modal to the bottom to show the message
+                 clientFoodPlanModal.scrollTop = clientFoodPlanModal.scrollHeight;
+                 setTimeout(() => {
+                     clientFoodPlanModal.style.display = 'none';
+                     document.getElementById('assigned-clients').scrollIntoView({ behavior: 'smooth' });
+                 }, 2000);
+             } catch (error) {
+                 showMessage(clientFoodPlanMessageDiv, error.message, 'error');
+                 // Scroll the modal to the bottom to show the message
+                 clientFoodPlanModal.scrollTop = clientFoodPlanModal.scrollHeight;
+             }
+         });
+ 
+         searchMyClientsForm.addEventListener('submit', async function(event) {
+             event.preventDefault();
+             console.log('Nutritionist search form submitted!'); // Log 5
+             const formData = new FormData(this);
+             const searchParams = new URLSearchParams();
+             for (const [key, value] of formData.entries()) {
+                 if (value) { // only add params if they have a value
+                     searchParams.append(key, value);
+                 }
+             }
+             fetchAssignedClients(searchParams.toString());
+         });
+ 
+         clearSearchMyClientsBtn.addEventListener('click', () => {
+             searchMyClientsForm.reset();
+             const url = new URL(window.location);
+             if (url.searchParams.has('filter')) {
+                 url.searchParams.delete('filter');
+                 window.history.pushState({}, '', url);
+             }
+             fetchAssignedClients();
+         });
+ 
+ 
+         // --- Modal Close Handlers ---
+         function setupModalCloseButton(modalElement, closeButtonId) {
+             const closeBtn = document.getElementById(closeButtonId);
+             if (closeBtn) closeBtn.onclick = () => { modalElement.style.display = "none"; };
+         }
+         setupModalCloseButton(viewClientBiodataModal, 'closeViewClientBiodataModalBtn');
+         setupModalCloseButton(viewClientMedicalHistoryModal, 'closeViewClientMedicalHistoryModalBtn');
+         setupModalCloseButton(viewClientBloodTestsModal, 'closeViewClientBloodTestsModalBtn');
+         setupModalCloseButton(clientFoodPlanModal, 'closeClientFoodPlanModalBtn');
+ 
+         window.onclick = function(event) {
+             if (event.target == viewClientBiodataModal) viewClientBiodataModal.style.display = "none";
+             if (event.target == viewClientMedicalHistoryModal) viewClientMedicalHistoryModal.style.display = "none";
+             if (event.target == viewClientBloodTestsModal) viewClientBloodTestsModal.style.display = "none";
+             if (event.target == clientFoodPlanModal) clientFoodPlanModal.style.display = "none";
+         };
+         
+         document.querySelectorAll('.navbar-links a[href^="#"]').forEach(anchor => {
+             anchor.addEventListener('click', function (e) {
+                 e.preventDefault();
+                 const targetElement = document.querySelector(this.getAttribute('href'));
+                 if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
+             });
+         });
+ 
+         logoutButton.addEventListener('click', () => {
+             localStorage.removeItem('staffToken');
+             localStorage.removeItem('selectedRole');
+             window.location.href = 'login.html';
+         });
+ 
+         document.addEventListener('DOMContentLoaded', () => {
+             fetchAssignedClients();
+             if (staffToken) {
+                fetch('api/nutritionist/me', {
+                    headers: { 'Authorization': `Bearer ${staffToken}` }
+                })
+                .then(response => {
+                    if (!response.ok) return null;
+                    return response.json();
+                })
+                .then(staff => {
+                    if (staff && staff.first_name) {
+                        const navbarBrand = document.querySelector('.navbar-brand');
+                        if (navbarBrand) {
+                            navbarBrand.textContent = `Welcome, ${staff.first_name}`;
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching nutritionist name:', error));
+            }
+         });
+     </script>
+ </body>
+ </html>
+ 

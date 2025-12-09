@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <!-- Add CKEditor 5 CDN -->
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
+    <link rel="stylesheet" href="admin_style.css">
+    <script src="js/bloodTestDefinitions.js"></script>
+    <style>
+        /* High-contrast style for food plan modal table headers */
+        .hourly-plan-table thead th {
+            background-color: #34495e; /* Dark blue-grey, matching other high-contrast headers */
+            color: white;
+            font-weight: bold;
+        }
+        /* Style for readonly textareas in the food plan modal */
+        .hourly-plan-table textarea[readonly] {
+            background-color: #f0f0f0; /* Light grey for readonly fields */
+            color: #555; /* Darker text for readability */
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="admin-container">
+        <section id="staff-section" class="management-section">
+            <h2>Manage Staff</h2>
+            <div class="add-form">
+                <h3>Add New Staff</h3>
+                <form id="addStaffForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staff_first_name">First Name:</label>
+                            <input type="text" id="staff_first_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staff_last_name">Last Name:</label>
+                            <input type="text" id="staff_last_name" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="staff_email">Email:</label>
+                            <input type="email" id="staff_email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="staff_password">Initial Password:</label>
+                            <input type="password" id="staff_password" required minlength="6">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Roles:</label>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="role_a" name="roles" value="A">
+                            <label for="role_a">Admin</label>
+                            <input type="checkbox" id="role_n" name="roles" value="N">
+                            <label for="role_n">Nutritionist</label>
+                            <input type="checkbox" id="role_e" name="roles" value="E">
+                            <label for="role_e">Executive</label>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn">Add Staff</button>
+                </form>
+                <div id="addStaffMessage" class="message-area"></div>
+            </div>
+
+            <h3>Existing Staff</h3>
+            <button type="button" id="clearStaffFilterBtn" class="submit-btn" style="background-color: #6c757d; margin-bottom: 10px; display: none;">Clear Filter</button>
+            <table id="staffTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Email</th>
+                        <th>Roles</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="staffTableBody">
+                    <!-- Staff rows will be populated by JavaScript -->
+                </tbody>
+            </table>
+            <div id="listStaffMessage" class="message-area"></div>
+        </section>
+
+    </main>
+
+    <!-- Modal for Viewing Client Medical History (Admin) -->
+    <div id="viewClientMedicalHistoryModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-btn" id="closeViewClientMedicalHistoryModalBtn">&times;</span>
+            <h3 id="viewClientMedicalHistoryModalTitle">Client Medical History</h3>
+            <h4>Family Medical History</h4>
+            <div id="viewFamilyMedicalHistory" class="read-only-display"></div>
+            <h4>Medications</h4>
+            <table class="medications-table-readonly">
+                <thead>
+                    <tr>
+                        <th>Diagnosis</th>
+                        <th>Medicine Name</th>
+                        <th>Power</th>
+                        <th>Timing</th>
+                        <th>Since When</th>
+                    </tr>
+                </thead>
+                <tbody id="viewClientMedicationsTableBody"></tbody>
+            </table>
+            <div id="viewClientMedicalHistoryMessage" class="message-area"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Viewing Client Biodata (Personal Details - Admin) -->
+    <div id="viewClientBiodataModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <span class="close-btn" id="closeViewClientBiodataModalBtn">&times;</span>
+            <h3 id="viewClientBiodataModalTitle">Client Personal Details</h3>
+            <div id="viewClientBiodataContent" class="read-only-grid-display"></div>
+            <div id="viewClientBiodataMessage" class="message-area"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Admin to View Client Blood Tests -->
+    <div id="viewClientBloodTestsModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 950px;">
+            <span class="close-btn" id="closeViewClientBloodTestsModalBtn">&times;</span>
+            <h3 id="viewClientBloodTestsModalTitle" style="margin-bottom: 15px;">Client Blood Test Results</h3>
+
+            <!-- This div will hold the dynamically generated table -->
+            <div id="viewClientBloodTestsTableContainer">
+                <!-- Blood test table will be dynamically generated here -->
+            </div>
+            <div id="viewClientBloodTestsMessage" class="message-area"></div>
+        </div>
+    </div>
+
+
+    <!-- Modal for Client Food Plan -->
+    <div id="clientFoodPlanModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 900px;">
+            <span class="close-btn" id="closeClientFoodPlanModalBtn">&times;</span>
+            <h3 id="clientFoodPlanModalTitle">Client Food Plan</h3>
+            <form id="clientFoodPlanEditForm">
+                <input type="hidden" id="editing_client_id_for_food_plan">
+                <h4>Hourly Food Plan</h4>
+                <table class="hourly-plan-table">
+                    <thead>
+                        <tr>
+                            <th class="time-column">Time</th>
+                            <th>Present Intake</th>
+                            <th>Proposed Structure</th>
+                            <th>Additional Points</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clientFoodPlanHourlyTableBody"></tbody>
+                </table>
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="clientFoodPlanPersonalRecommendations">Additional Personal Recommendations (for this
+                        client):</label>
+                    <textarea id="clientFoodPlanPersonalRecommendations" name="additional_personal_recommendations"
+                        rows="5"></textarea>
+                </div>
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>General Admin Recommendations (for context - read-only):</label>
+                    <div id="clientFoodPlanGeneralAdminRecommendationsDisplay" class="read-only-display">Loading...
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn">Save Client Food Plan</button>
+            </form>
+            <div id="clientFoodPlanMessage" class="message-area"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Staff Roles -->
+    <div id="editRolesModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" id="closeEditRolesModalBtn">&times;</span>
+            <h3 id="editRolesModalTitle">Edit Roles</h3>
+            <form id="editRolesForm">
+                <input type="hidden" id="edit_user_id">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="edit_role_a" name="roles" value="A">
+                    <label for="edit_role_a">Admin</label>
+                    <input type="checkbox" id="edit_role_n" name="roles" value="N">
+                    <label for="edit_role_n">Nutritionist</label>
+                    <input type="checkbox" id="edit_role_e" name="roles" value="E">
+                    <label for="edit_role_e">Executive</label>
+                </div>
+                <button type="submit" class="submit-btn">Save Roles</button>
+            </form>
+            <div id="editRolesMessage" class="message-area"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Staff Details -->
+    <div id="editStaffDetailsModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" id="closeEditStaffDetailsModalBtn">&times;</span>
+            <h3>Edit Staff Details</h3>
+            <form id="editStaffDetailsForm">
+                <input type="hidden" id="edit_staff_user_id">
+                <div class="form-group">
+                    <label for="edit_staff_first_name">First Name:</label>
+                    <input type="text" id="edit_staff_first_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_staff_last_name">Last Name:</label>
+                    <input type="text" id="edit_staff_last_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_staff_email">Email:</label>
+                    <input type="email" id="edit_staff_email" required>
+                </div>
+                <button type="submit" class="submit-btn">Save Changes</button>
+            </form>
+            <div id="editStaffDetailsMessage" class="message-area"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Editing Client -->
+    <div id="editClientModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" id="closeEditClientModalBtn">&times;</span>
+            <h3>Edit Client Details</h3>
+            <form id="editClientForm">
+                <input type="hidden" id="edit_client_id">
+                <div class="form-group">
+                    <label for="edit_client_first_name">First Name:</label>
+                    <input type="text" id="edit_client_first_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_client_last_name">Last Name:</label>
+                    <input type="text" id="edit_client_last_name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_client_email">Email:</label>
+                    <input type="email" id="edit_client_email" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit_client_mobile_number">Mobile Number:</label>
+                    <input type="tel" id="edit_client_mobile_number" required>
+                </div>
+                <button type="submit" class="submit-btn">Save Client Changes</button>
+            </form>
+            <div id="editClientMessage" class="message-area"></div>
+        </div>
+    </div>
+
+    <!-- Modal for Assigning Staff -->
+    <div id="assignStaffModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-btn" id="closeAssignStaffModalBtn">&times;</span>
+            <h3 id="assignStaffModalTitle">Assign Staff</h3>
+            <form id="assignStaffForm">
+                <input type="hidden" id="assign_staff_client_id">
+                <input type="hidden" id="assign_staff_type">
+                <div class="form-group">
+                    <label for="staff_select">Select Staff:</label>
+                    <select id="staff_select" required></select>
+                </div>
+                <button type="submit" class="submit-btn">Assign</button>
+            </form>
+            <div id="assignStaffMessage" class="message-area"></div>
+        </div>
+    </div>
+
+    <script src="js/admin-navbar.js" defer></script>
+    <script>
+        const addStaffForm = document.getElementById('addStaffForm');
+        const addStaffMessageDiv = document.getElementById('addStaffMessage');
+        const staffTableBody = document.querySelector('#staffTable tbody');
+        const listStaffMessageDiv = document.getElementById('listStaffMessage');
+
+        const clearStaffFilterBtn = document.getElementById('clearStaffFilterBtn');
+        const editRolesModal = document.getElementById('editRolesModal');
+        const editRolesForm = document.getElementById('editRolesForm');
+        const editRolesMessageDiv = document.getElementById('editRolesMessage');
+        const closeEditRolesModalBtn = document.getElementById('closeEditRolesModalBtn');
+
+        const editStaffDetailsModal = document.getElementById('editStaffDetailsModal');
+        const editStaffDetailsForm = document.getElementById('editStaffDetailsForm');
+        const editStaffDetailsMessage = document.getElementById('editStaffDetailsMessage');
+        const closeEditStaffDetailsModalBtn = document.getElementById('closeEditStaffDetailsModalBtn');
+        let allFetchedStaff = [];
+
+        const adminToken = localStorage.getItem('adminToken');
+        if (!adminToken) {
+            window.location.href = 'login.html';
+        }
+
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = `message-area ${type}`;
+        }
+
+        // --- Staff Management ---
+        async function fetchStaff() {
+            showMessage(listStaffMessageDiv, 'Loading staff...', 'info');
+            try {
+                const response = await fetch('api/admin/staff', {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+                if (!response.ok) {
+                    if ((response.status === 403 || response.status === 401)) {
+                        const errorResultCheck = await response.json().catch(() => ({}));
+                        if (errorResultCheck.error && errorResultCheck.error.includes('Token verification failed')) {
+                            localStorage.removeItem('adminToken');
+                            alert('Your session has expired or is invalid. Please log in again.');
+                            window.location.href = 'login.html';
+                            return;
+                        }
+                    }
+                    throw new Error((await response.json()).error || 'Failed to fetch staff');
+                }
+                let staff = await response.json();
+                allFetchedStaff = staff; // Store staff for later use
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const filter = urlParams.get('filter');
+                let filterMessage = '';
+                if (filter === 'nutritionists' || filter === 'executives') {
+                    clearStaffFilterBtn.style.display = 'inline-block';
+                    if (filter === 'nutritionists') {
+                        staff = staff.filter(s => s.roles.includes('nutritionist'));
+                        filterMessage = `Showing ${staff.length} nutritionist(s).`;
+                    } else if (filter === 'executives') {
+                        staff = staff.filter(s => s.roles.includes('executive'));
+                        filterMessage = `Showing ${staff.length} executive(s).`;
+                    }
+                } else {
+                    clearStaffFilterBtn.style.display = 'none';
+                }
+
+                staffTableBody.innerHTML = '';
+                if (staff.length === 0) {
+                    staffTableBody.innerHTML = '<tr><td colspan="7">No staff found.</td></tr>';
+                } else {
+                    staff.forEach(s => {
+                        const row = staffTableBody.insertRow();
+                        const roles = s.roles.join(', ');
+                        row.innerHTML = `
+                            <td>${s.user_id}</td><td>${s.first_name}</td><td>${s.last_name}</td><td>${s.email}</td>
+                            <td>${roles}</td>
+                            <td>${s.is_active ? 'Yes' : 'No'}</td>
+                            <td>
+                                <button class="action-btn edit-btn" data-id="${s.user_id}">Edit Details</button>
+                                <button class="action-btn edit-roles-btn" data-id="${s.user_id}" data-roles='${JSON.stringify(s.roles)}'>Edit Roles</button>
+                                <button class="action-btn status-toggle-btn ${s.is_active ? 'deactivate-btn' : 'activate-btn'}" data-id="${s.user_id}" data-is_active="${s.is_active}">${s.is_active ? 'Deactivate' : 'Activate'}</button>
+                            </td>`;
+                    });
+                }
+                if (filterMessage) {
+                    showMessage(listStaffMessageDiv, filterMessage, 'info');
+                } else {
+                    showMessage(listStaffMessageDiv, '', 'info');
+                }
+            } catch (error) {
+                showMessage(listStaffMessageDiv, error.message, 'error');
+            }
+        }
+
+        addStaffForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const roles = Array.from(addStaffForm.querySelectorAll('input[name="roles"]:checked')).map(cb => cb.value);
+            if (roles.length === 0) {
+                showMessage(addStaffMessageDiv, 'Please select at least one role.', 'error');
+                return;
+            }
+            const data = {
+                first_name: document.getElementById('staff_first_name').value,
+                last_name: document.getElementById('staff_last_name').value,
+                email: document.getElementById('staff_email').value,
+                password: document.getElementById('staff_password').value,
+                roles: roles
+            };
+
+            showMessage(addStaffMessageDiv, 'Processing...', 'info');
+            try {
+                const response = await fetch('api/admin/staff', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify(data)
+                });
+                if (!response.ok) {
+                    if ((response.status === 403 || response.status === 401)) {
+                        const errorResultCheck = await response.json().catch(() => ({}));
+                        if (errorResultCheck.error && errorResultCheck.error.includes('Token verification failed')) {
+                            localStorage.removeItem('adminToken');
+                            alert('Your session has expired or is invalid. Please log in again.');
+                            window.location.href = 'login.html';
+                            return;
+                        }
+                    }
+                    throw new Error((await response.json()).error || 'Operation failed');
+                }
+                const result = await response.json();
+                showMessage(addStaffMessageDiv, result.message, 'success');
+                addStaffForm.reset();
+                fetchStaff();
+            } catch (error) {
+                showMessage(addStaffMessageDiv, error.message, 'error');
+            }
+        });
+
+        staffTableBody.addEventListener('click', async function (event) {
+            const target = event.target;
+            const userId = target.dataset.id;
+            if (target.classList.contains('edit-btn')) {
+                const staffMember = allFetchedStaff.find(s => s.user_id == userId);
+                if (staffMember) {
+                    document.getElementById('edit_staff_user_id').value = staffMember.user_id;
+                    document.getElementById('edit_staff_first_name').value = staffMember.first_name;
+                    document.getElementById('edit_staff_last_name').value = staffMember.last_name;
+                    document.getElementById('edit_staff_email').value = staffMember.email;
+                    showMessage(editStaffDetailsMessage, '', 'info'); // Clear previous messages
+                    editStaffDetailsModal.style.display = 'block';
+                }
+            } else if (target.classList.contains('edit-roles-btn')) {
+                const roles = JSON.parse(target.dataset.roles);
+                document.getElementById('edit_user_id').value = userId;
+                document.getElementById('edit_role_a').checked = roles.includes('admin');
+                document.getElementById('edit_role_n').checked = roles.includes('nutritionist');
+                document.getElementById('edit_role_e').checked = roles.includes('executive');
+                editRolesModal.style.display = 'block';
+            } else if (target.classList.contains('status-toggle-btn')) {
+                const newStatus = !(target.dataset.is_active === 'true');
+                if (confirm(`Sure you want to ${newStatus ? 'activate' : 'deactivate'}?`)) {
+                    try {
+                        const response = await fetch(`api/admin/users/${userId}/status`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                            body: JSON.stringify({ is_active: newStatus })
+                        });
+                        if (!response.ok) {
+                            if ((response.status === 403 || response.status === 401)) {
+                                const errorResultCheck = await response.json().catch(() => ({}));
+                                if (errorResultCheck.error && errorResultCheck.error.includes('Token verification failed')) {
+                                    localStorage.removeItem('adminToken');
+                                    alert('Your session has expired or is invalid. Please log in again.');
+                                    window.location.href = 'login.html';
+                                    return;
+                                }
+                            }
+                            throw new Error((await response.json()).error || 'Status update failed');
+                        }
+                        const result = await response.json();
+                        showMessage(listStaffMessageDiv, result.message, 'success');
+                        fetchStaff();
+                    } catch (error) { showMessage(listStaffMessageDiv, error.message, 'error'); }
+                }
+            }
+        });
+
+        clearStaffFilterBtn.addEventListener('click', () => {
+            const url = new URL(window.location);
+            url.searchParams.delete('filter');
+            window.history.pushState({}, '', url);
+            fetchStaff();
+        });
+
+        editRolesForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const userId = document.getElementById('edit_user_id').value;
+            const roles = Array.from(editRolesForm.querySelectorAll('input[name="roles"]:checked')).map(cb => cb.value);
+            showMessage(editRolesMessageDiv, 'Processing...', 'info');
+            try {
+                const response = await fetch(`api/admin/users/${userId}/roles`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ roles })
+                });
+                if (!response.ok) {
+                    if ((response.status === 403 || response.status === 401)) {
+                        const errorResultCheck = await response.json().catch(() => ({}));
+                        if (errorResultCheck.error && errorResultCheck.error.includes('Token verification failed')) {
+                            localStorage.removeItem('adminToken');
+                            alert('Your session has expired or is invalid. Please log in again.');
+                            window.location.href = 'login.html';
+                            return;
+                        }
+                    }
+                    throw new Error((await response.json()).error || 'Operation failed');
+                }
+                const result = await response.json();
+                showMessage(editRolesMessageDiv, result.message, 'success');
+                fetchStaff();
+                setTimeout(() => { editRolesModal.style.display = 'none'; }, 1500);
+            } catch (error) {
+                showMessage(editRolesMessageDiv, error.message, 'error');
+            }
+        });
+
+        editStaffDetailsForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const userId = document.getElementById('edit_staff_user_id').value;
+            const data = {
+                first_name: document.getElementById('edit_staff_first_name').value,
+                last_name: document.getElementById('edit_staff_last_name').value,
+                email: document.getElementById('edit_staff_email').value
+            };
+
+            showMessage(editStaffDetailsMessage, 'Saving...', 'info');
+
+            try {
+                const response = await fetch(`api/admin/staff/${userId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${adminToken}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (!response.ok) { throw new Error(result.error || 'Update failed'); }
+
+                showMessage(editStaffDetailsMessage, result.message, 'success');
+                fetchStaff(); // Refresh the staff list
+                setTimeout(() => { editStaffDetailsModal.style.display = 'none'; }, 1500);
+            } catch (error) {
+                showMessage(editStaffDetailsMessage, error.message, 'error');
+            }
+        });
+
+        // --- Modal Close Handlers ---
+        closeEditStaffDetailsModalBtn.onclick = () => {
+            editStaffDetailsModal.style.display = 'none';
+        };
+        closeEditRolesModalBtn.onclick = () => {
+            editRolesModal.style.display = 'none';
+        };
+        window.onclick = function(event) {
+            if (event.target == editStaffDetailsModal) editStaffDetailsModal.style.display = 'none';
+            if (event.target == editRolesModal) editRolesModal.style.display = 'none';
+        };
+
+        // --- Navbar Link Smooth Scroll ---
+        document.querySelectorAll('.navbar-links a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // --- Initial Data Fetch ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchStaff();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,84 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Verify Email OTP</title>
+     <link rel="stylesheet" href="style.css"> <!-- Reusing the same stylesheet -->
+ </head>
+ <body>
+     <div class="container">
+         <h1>Verify Your Email</h1>
+         <p>Please enter the email you registered with and the OTP sent to your inbox.</p>
+         <form id="otpVerificationForm">
+             <div class="form-group">
+                 <label for="email">Email:</label>
+                 <input type="email" id="email" name="email" required>
+             </div>
+             <div class="form-group">
+                 <label for="otp">OTP (6 digits):</label>
+                 <input type="text" id="otp" name="otp" required minlength="6" maxlength="6" pattern="\d{6}">
+             </div>
+             <button type="submit" class="submit-btn">Verify OTP</button>
+         </form>
+         <div id="message" class="message-area"></div>
+     </div>
+ 
+     <script>
+         // Pre-fill email if passed as a URL parameter
+         const urlParams = new URLSearchParams(window.location.search);
+         const emailFromUrl = urlParams.get('email');
+         if (emailFromUrl) {
+             document.getElementById('email').value = decodeURIComponent(emailFromUrl);
+         }
+ 
+         document.getElementById('otpVerificationForm').addEventListener('submit', async function(event) {
+             event.preventDefault();
+ 
+             const formData = {
+                 email: document.getElementById('email').value,
+                 otp: document.getElementById('otp').value,
+             };
+ 
+             const messageDiv = document.getElementById('message');
+             messageDiv.textContent = 'Processing...';
+             messageDiv.className = 'message-area info';
+ 
+             try {
+                 const response = await fetch('verify-email', { // Relative URL
+                     method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json',
+                     },
+                     body: JSON.stringify(formData),
+                 });
+ 
+                 const result = await response.json();
+ 
+                 if (response.ok) {
+                     // Updated success message
+                     messageDiv.textContent = "Your email has been successfully verified. Please proceed to the main website. You will be able to login once payment is confirmed and your account is activated by the admin. You will receive an email after the activation is executed by the Admin.";
+                     messageDiv.className = 'message-area success';
+                     document.getElementById('otpVerificationForm').reset();
+                     if (emailFromUrl) { // Keep email pre-filled if it was from URL
+                         document.getElementById('email').value = decodeURIComponent(emailFromUrl);
+                     }
+                     // Redirect to the main website on port 3010 after a delay
+                     setTimeout(() => {
+                        // Redirect to the main login page
+                        window.location.href = 'login.html';
+                     }, 7000); // 7-second delay to allow user to read the message
+                 } else {
+                     messageDiv.textContent = 'Error: ' + (result.error || 'OTP verification failed. Please try again.');
+                     messageDiv.className = 'message-area error';
+                 }
+             } catch (error) {
+                 console.error('Network or other error:', error);
+                 messageDiv.textContent = 'An error occurred. Please check your connection and try again.';
+                 messageDiv.className = 'message-area error';
+             }
+         });
+     </script>
+ </body>
+ </html>
+ 

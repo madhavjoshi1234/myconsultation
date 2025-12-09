@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Dashboard</title>
+    <link rel="stylesheet" href="style.css"> <!-- Assuming you have a general stylesheet -->
+    <link rel="stylesheet" href="client-navbar.css">
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #f4f7f6; 
+            color: #333; 
+            /* Override global styles from /style.css that center content */
+            display: block; /* Change from flex to block to allow natural flow */
+            margin: 0;      /* Reset body margin */
+            padding-top: 70px; /* Add padding for the fixed navbar */
+            /* min-height: 100vh; /* You can keep this if you want full viewport height */
+            /* Remove justify-content and align-items if they were inherited */
+        }
+        .container { max-width: 800px; margin: auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        .client-info p { margin: 5px 0; }
+        .client-info strong { color: #0056b3; }
+        #message { margin-top: 15px; }
+        .follow-up-note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #eef2f7;
+            border-left: 4px solid #0056b3;
+            font-size: 0.9em;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <div class="container">
+        <h1>Client Dashboard</h1>
+        <div id="message"></div>
+
+        <div class="client-info" id="clientInfoSection" style="display: none;">
+            <h2>Welcome, <span id="clientName"></span>!</h2>
+            <p><strong>Email:</strong> <span id="clientEmail"></span></p>
+            <p><strong>Client ID:</strong> <span id="clientId"></span></p>
+            <p class="follow-up-note">After receiving the food plan and following it for 3 to 4 months, you may contact your nutritionist to initiate followup.</p>
+            <!-- More client-specific information can be added here -->
+        </div>
+    </div>
+
+    <script src="js/client-navbar.js" defer></script>
+    <script src="js/bloodTestDefinitions.js" defer></script>
+    <script src="js/client-dashboard.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nutritionist Statistics</title>
+    <link rel="stylesheet" href="admin_style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="navbar-brand">Nutritionist Dashboard</div>
+        <nav class="navbar-links">
+            <ul>
+                <li><a href="nutritionist-dashboard.html">My Clients</a></li>
+                <li><a href="nutritionist-statistics.html" class="active">Statistics</a></li>
+                <li><button id="logoutButton" class="nav-logout-btn">Logout</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="admin-container">
+        <section id="statistics-section" class="management-section">
+            <h2>My Statistics</h2>
+            <div id="statsMessage" class="message-area"></div>
+            <div class="stats-cards-container">
+                <div class="stat-card clickable" onclick="window.location.href='nutritionist-dashboard.html?filter=all_assigned#assigned-clients'">
+                    <h3>Total Assigned Clients</h3>
+                    <p id="totalAssignedClientsCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='nutritionist-dashboard.html?filter=final_history_submitted#assigned-clients'">
+                    <h3>Final History Submitted</h3>
+                    <p id="finalHistorySubmittedCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='nutritionist-dashboard.html?filter=food_plan_suggested#assigned-clients'">
+                    <h3>Food Plan Suggested</h3>
+                    <p id="foodPlanSuggestedCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='nutritionist-dashboard.html?filter=food_plan_sent#assigned-clients'">
+                    <h3>Food Plan Sent</h3>
+                    <p id="foodPlanSentCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const staffToken = localStorage.getItem('staffToken');
+        if (!staffToken) {
+            window.location.href = 'login.html';
+        }
+
+        if (staffToken) {
+            try {
+                const decodedToken = JSON.parse(atob(staffToken.split('.')[1]));
+                const staffName = decodedToken.firstName;
+                const navbarBrand = document.querySelector('.navbar-brand');
+                if (navbarBrand && staffName) {
+                    navbarBrand.textContent = `Welcome, ${staffName}`;
+                }
+            } catch (e) {
+                console.error("Failed to decode staff token:", e);
+            }
+        }
+
+        const statsMessageDiv = document.getElementById('statsMessage');
+        const logoutButton = document.getElementById('logoutButton');
+
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('staffToken');
+            localStorage.removeItem('selectedRole');
+            window.location.href = 'login.html';
+        });
+
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = `message-area ${type}`;
+        }
+
+        async function fetchWithAuth(url, options = {}) {
+            const defaultHeaders = {
+                'Authorization': `Bearer ${staffToken}`,
+                'Content-Type': 'application/json'
+            };
+
+            const config = {
+                ...options,
+                headers: {
+                    ...defaultHeaders,
+                    ...options.headers,
+                }
+            };
+
+            const response = await fetch(url, config);
+
+            if (response.ok) {
+                return response;
+            }
+
+            const isJson = response.headers.get('content-type')?.includes('application/json');
+            let errorData = isJson ? await response.json().catch(() => ({})) : {};
+
+            if (response.status === 403 || response.status === 401) {
+                if (errorData.error && errorData.error.includes('Token verification failed')) {
+                    localStorage.removeItem('staffToken');
+                    localStorage.removeItem('selectedRole');
+                    alert('Your session has expired or is invalid. Please log in again.');
+                    window.location.href = 'login.html';
+                    throw new Error('SESSION_EXPIRED');
+                }
+            }
+
+            throw new Error(errorData.error || `Request failed with status ${response.status}`);
+        }
+
+        async function fetchStatistics() {
+            showMessage(statsMessageDiv, 'Loading statistics...', 'info');
+            try {
+                const response = await fetchWithAuth('api/nutritionist/stats/counts');
+                const stats = await response.json();
+
+                document.getElementById('totalAssignedClientsCount').textContent = stats.total_assigned_clients_count || 0;
+                document.getElementById('finalHistorySubmittedCount').textContent = stats.final_history_submitted_count || 0;
+                document.getElementById('foodPlanSuggestedCount').textContent = stats.food_plan_suggested_count || 0;
+                document.getElementById('foodPlanSentCount').textContent = stats.food_plan_sent_count || 0;
+
+                showMessage(statsMessageDiv, 'Statistics loaded.', 'success');
+
+            } catch (error) {
+                console.error('Error in fetchStatistics:', error);
+                if (error.message !== 'SESSION_EXPIRED') {
+                    showMessage(statsMessageDiv, `Error loading statistics: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchStatistics);
+    </script>
+</body>
+</html>

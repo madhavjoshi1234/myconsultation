@@ -1,0 +1,527 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Executive Dashboard</title>
+     <link rel="stylesheet" href="admin_style.css">
+     <!-- CKEditor is not strictly needed if all food plan viewing is read-only HTML,
+          but keeping it in case any part might render rich text content directly.
+          If food plan is purely plain text or simple HTML display, this can be removed. -->
+     <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
+     <script src="js/bloodTestDefinitions.js"></script>
+     <style>
+         /* Make modal titles darker and more prominent */
+         #clientFoodPlanModal h4 {
+             color: #333; /* Darker color */
+             font-weight: bold;
+             border-bottom: 1px solid #ccc;
+             padding-bottom: 5px;
+             margin-top: 20px;
+         }
+     </style>
+ </head>
+ <body>
+     <header class="navbar">
+         <div class="navbar-brand">Executive Dashboard</div>
+         <nav class="navbar-links">
+             <ul>
+                 <li><a href="executive-dashboard.html" class="active">My Enrolled Clients</a></li>
+                 <li><a href="executive-statistics.html">Statistics</a></li>
+                 <li><button id="logoutButton" class="nav-logout-btn">Logout</button></li>
+             </ul>
+         </nav>
+     </header>
+ 
+     <main class="admin-container">
+         <section id="enrolled-clients" class="management-section">
+             <h2>Search My Enrolled Clients</h2>
+             <div class="search-container" style="margin-bottom: 20px; padding: 15px; border: 1px solid #e0e0e0; border-radius: 5px; background-color: #fdfdfd;">
+                 <form id="searchMyClientsFormExec" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                     <div class="form-group" style="flex-grow: 1; min-width: 120px;">
+                         <label for="search_client_id_exec" style="flex-basis: auto; margin-bottom: 5px;">Client ID:</label>
+                         <input type="text" id="search_client_id_exec" name="client_id" style="width: 100%;">
+                     </div>
+                     <div class="form-group" style="flex-grow: 1; min-width: 150px;">
+                         <label for="search_first_name_exec" style="flex-basis: auto; margin-bottom: 5px;">First Name:</label>
+                         <input type="text" id="search_first_name_exec" name="first_name" style="width: 100%;">
+                     </div>
+                     <div class="form-group" style="flex-grow: 1; min-width: 150px;">
+                         <label for="search_last_name_exec" style="flex-basis: auto; margin-bottom: 5px;">Last Name:</label>
+                         <input type="text" id="search_last_name_exec" name="last_name" style="width: 100%;">
+                     </div>
+                     <div class="form-group" style="flex-grow: 1; min-width: 180px;">
+                         <label for="search_email_exec" style="flex-basis: auto; margin-bottom: 5px;">Email:</label>
+                         <input type="email" id="search_email_exec" name="email" style="width: 100%;">
+                     </div>
+                     <button type="submit" class="submit-btn" style="align-self: flex-end;">Search</button>
+                     <button type="button" id="clearSearchMyClientsBtnExec" class="submit-btn" style="align-self: flex-end; background-color: #6c757d;">Clear</button>
+                 </form>
+             </div>
+             <h2>My Enrolled Clients</h2>
+             <table id="clientsTable">
+                 <thead>
+                     <tr>
+                         <th>ID</th>
+                         <th>Name</th>
+                         <th>Email</th>
+                         <th>Mobile</th>
+                         <th>Registration Date</th>
+                     </tr>
+                 </thead>
+                 <tbody id="clientsTableBody">
+                     <!-- Client rows will be populated by JavaScript -->
+                 </tbody>
+             </table>
+             <div id="listClientsMessage" class="message-area"></div>
+         </section>
+     </main>
+ 
+     <!-- Modal for Viewing Client Biodata -->
+     <div id="viewClientBiodataModal" class="modal" style="display: none;">
+         <div class="modal-content" style="max-width: 800px;">
+             <span class="close-btn" id="closeViewClientBiodataModalBtn">&times;</span>
+             <h3 id="viewClientBiodataModalTitle">Client Personal Details</h3>
+             <div id="viewClientBiodataContent" class="read-only-grid-display"></div>
+             <div id="viewClientBiodataMessage" class="message-area"></div>
+         </div>
+     </div>
+ 
+     <!-- Modal for Viewing Client Medical History -->
+     <div id="viewClientMedicalHistoryModal" class="modal" style="display: none;">
+         <div class="modal-content" style="max-width: 800px;">
+             <span class="close-btn" id="closeViewClientMedicalHistoryModalBtn">&times;</span>
+             <h3 id="viewClientMedicalHistoryModalTitle">Client Medical History</h3>
+             <h4>Family Medical History</h4>
+             <div id="viewFamilyMedicalHistory" class="read-only-display"></div>
+             <h4>Medications</h4>
+             <table class="medications-table-readonly">
+                 <thead>
+                     <tr>
+                         <th>Diagnosis</th>
+                         <th>Medicine Name</th>
+                         <th>Power</th>
+                         <th>Timing</th>
+                         <th>Since When</th>
+                     </tr>
+                 </thead>
+                 <tbody id="viewClientMedicationsTableBody"></tbody>
+             </table>
+             <div id="viewClientMedicalHistoryMessage" class="message-area"></div>
+         </div>
+     </div>
+ 
+     <!-- Modal for Viewing Client Blood Tests -->
+     <div id="viewClientBloodTestsModal" class="modal" style="display: none;">
+         <div class="modal-content" style="max-width: 950px;">
+             <span class="close-btn" id="closeViewClientBloodTestsModalBtn">&times;</span>
+             <h3 id="viewClientBloodTestsModalTitle">Client Blood Test Results</h3>
+             <div id="viewClientBloodTestReportDates" style="margin-bottom: 15px; font-weight: bold;"></div>
+             <div id="viewClientBloodTestsTableContainer" class="test-table"></div>
+             <div id="viewClientBloodTestsMessage" class="message-area"></div>
+         </div>
+     </div>
+ 
+     <!-- Modal for Client Food Plan (View Only by Executive) -->
+     <div id="clientFoodPlanModal" class="modal" style="display: none;">
+         <div class="modal-content" style="max-width: 900px;">
+             <span class="close-btn" id="closeClientFoodPlanModalBtn">&times;</span>
+             <h3 id="clientFoodPlanModalTitle">View Client Food Plan</h3>
+             <h4>Hourly Food Plan</h4>
+             <div id="clientFoodPlanHourlyDisplay" class="read-only-display" style="max-height: 400px; overflow-y: auto; border: 1px solid #eee; padding:10px;">
+                 <!-- Hourly plan will be rendered here as HTML -->
+             </div>
+             <div style="margin-top: 20px;">
+                 <h4>Additional Personal Recommendations:</h4>
+                 <div id="clientFoodPlanPersonalRecommendationsDisplay" class="read-only-display" style="border: 1px solid #eee; padding:10px; min-height: 80px;"></div>
+             </div>
+             <div style="margin-top: 20px;">
+                 <h4>General Admin Recommendations:</h4>
+                 <div id="clientFoodPlanGeneralAdminRecommendationsDisplay" class="read-only-display" style="border: 1px solid #eee; padding:10px; min-height: 80px;"></div>
+             </div>
+             <div id="clientFoodPlanMessage" class="message-area"></div>
+         </div>
+     </div>
+ 
+     <script>
+         const staffToken = localStorage.getItem('staffToken');
+         if (!staffToken) {
+             window.location.href = 'login.html';
+         }
+         if (staffToken) {
+            fetch('api/executive/me', {
+                headers: { 'Authorization': `Bearer ${staffToken}` }
+            })
+            .then(response => {
+                if (!response.ok) return null;
+                return response.json();
+            })
+            .then(staff => {
+                if (staff && staff.first_name) {
+                    const navbarBrand = document.querySelector('.navbar-brand');
+                    if (navbarBrand) {
+                        navbarBrand.textContent = `Welcome, ${staff.first_name}`;
+                    }
+                }
+            })
+            .catch(error => console.error('Error fetching executive name:', error));
+        }
+         // Verify role from token
+         try {
+             const decodedToken = JSON.parse(atob(staffToken.split('.')[1]));
+             if (!decodedToken.roles.includes('executive')) {
+                 alert('Access denied. Not an executive.' + decodedToken.roles);
+                 localStorage.removeItem('staffToken');
+                 window.location.href = 'login.html';
+             }
+         } catch (e) {
+             console.error("Error decoding token:", e);
+             localStorage.removeItem('staffToken');
+             window.location.href = 'login.html';
+         }
+ 
+         const clientsTableBody = document.getElementById('clientsTableBody');
+         const listClientsMessageDiv = document.getElementById('listClientsMessage');
+         const logoutButton = document.getElementById('logoutButton');
+         const searchMyClientsFormExec = document.getElementById('searchMyClientsFormExec');
+         const clearSearchMyClientsBtnExec = document.getElementById('clearSearchMyClientsBtnExec');
+ 
+         // Modal Elements
+         const viewClientBiodataModal = document.getElementById('viewClientBiodataModal');
+         const viewClientBiodataModalTitle = document.getElementById('viewClientBiodataModalTitle');
+         const viewClientBiodataContentDiv = document.getElementById('viewClientBiodataContent');
+         const viewClientBiodataMessageDiv = document.getElementById('viewClientBiodataMessage');
+ 
+         const viewClientMedicalHistoryModal = document.getElementById('viewClientMedicalHistoryModal');
+         const viewClientMedicalHistoryModalTitle = document.getElementById('viewClientMedicalHistoryModalTitle');
+         const viewFamilyMedicalHistoryDiv = document.getElementById('viewFamilyMedicalHistory');
+         const viewClientMedicationsTableBody = document.getElementById('viewClientMedicationsTableBody');
+         const viewClientMedicalHistoryMessageDiv = document.getElementById('viewClientMedicalHistoryMessage');
+ 
+         const viewClientBloodTestsModal = document.getElementById('viewClientBloodTestsModal');
+         const viewClientBloodTestsModalTitle = document.getElementById('viewClientBloodTestsModalTitle');
+         const viewClientBloodTestReportDatesDiv = document.getElementById('viewClientBloodTestReportDates');
+         const viewClientBloodTestsTableContainer = document.getElementById('viewClientBloodTestsTableContainer');
+         const viewClientBloodTestsMessageDiv = document.getElementById('viewClientBloodTestsMessage');
+ 
+         const clientFoodPlanModal = document.getElementById('clientFoodPlanModal');
+         const clientFoodPlanModalTitle = document.getElementById('clientFoodPlanModalTitle');
+         const clientFoodPlanHourlyDisplay = document.getElementById('clientFoodPlanHourlyDisplay');
+         const clientFoodPlanPersonalRecommendationsDisplay = document.getElementById('clientFoodPlanPersonalRecommendationsDisplay');
+         const clientFoodPlanGeneralAdminRecommendationsDisplay = document.getElementById('clientFoodPlanGeneralAdminRecommendationsDisplay');
+         const clientFoodPlanMessageDiv = document.getElementById('clientFoodPlanMessage');
+ 
+         function showMessage(element, message, type) {
+             element.textContent = message;
+             element.className = `message-area ${type}`;
+         }
+ 
+         async function fetchEnrolledClients(queryParams = '') {
+             showMessage(listClientsMessageDiv, 'Loading clients...', 'info');
+             console.log('fetchEnrolledClients called with params:', queryParams); // Log 1
+             let url = 'api/executive/my-clients';
+             const isSearch = !!queryParams;
+             if (isSearch) url = `api/executive/my-clients/search?${queryParams}`;
+             console.log('Fetching URL:', url); // Log 2
+             try {
+                 const response = await fetch(url, {
+                     headers: { 'Authorization': `Bearer ${staffToken}` }
+                 });
+                 console.log('Fetch response status:', response.status); // Log 3
+                 if (!response.ok) {
+                     const errorData = await response.json().catch(() => ({ error: 'Failed to parse error from server' }));
+                     throw new Error(errorData.error || `Failed to fetch clients (HTTP ${response.status})`);
+                 }
+                 let clients = await response.json();
+
+                 const urlParams = new URLSearchParams(window.location.search);
+                 const filter = urlParams.get('filter');
+                 let filterMessage = '';
+                 if (filter && !isSearch) {
+                     if (filter === 'total_enrolled') {
+                         filterMessage = `Showing all ${clients.length} enrolled client(s).`;
+                     } else if (filter === 'pending_activation') {
+                         clients = clients.filter(client => !client.is_account_active);
+                         filterMessage = `Showing ${clients.length} client(s) pending activation.`;
+                     } else if (filter === 'final_history_submitted') {
+                         clients = clients.filter(client => client.is_finalized);
+                         filterMessage = `Showing ${clients.length} client(s) who have submitted final history.`;
+                     } else if (filter === 'food_plan_suggested') {
+                         clients = clients.filter(client => client.has_food_plan_suggested);
+                         filterMessage = `Showing ${clients.length} client(s) with a suggested food plan.`;
+                     } else if (filter === 'food_plan_sent') {
+                         clients = clients.filter(client => client.is_food_plan_complete);
+                         filterMessage = `Showing ${clients.length} client(s) who have been sent a food plan.`;
+                     }
+                 }
+
+                 populateClientsTable(clients);
+                 if (filterMessage) {
+                     showMessage(listClientsMessageDiv, filterMessage, 'info');
+                 } else if (clients.length > 0) {
+                     showMessage(listClientsMessageDiv, isSearch ? `Found ${clients.length} client(s).` : '', 'info');
+                 } else {
+                     showMessage(listClientsMessageDiv, isSearch ? 'No clients found matching your search.' : 'No clients enrolled by you.', 'info');
+                 }
+             } catch (error) {
+                 console.error('Error in fetchEnrolledClients:', error); // Log 4
+                 showMessage(listClientsMessageDiv, `Error: ${error.message}`, 'error');
+             }
+         }
+ 
+         function populateClientsTable(clients) {
+             clientsTableBody.innerHTML = '';
+             if (!clients || clients.length === 0) {
+                 clientsTableBody.innerHTML = '<tr><td colspan="5">No clients enrolled.</td></tr>';
+                 return;
+             }
+             clients.forEach(client => {
+                 const dataRow = clientsTableBody.insertRow();
+                 dataRow.innerHTML = `
+                     <td>${client.client_id}</td>
+                     <td>${client.first_name} ${client.last_name}</td>
+                     <td>${client.email}</td>
+                     <td>${client.mobile_number || 'N/A'}</td>
+                     <td>${new Date(client.registration_date).toLocaleDateString()}</td>`;
+
+                const actionsRow = clientsTableBody.insertRow();
+                actionsRow.classList.add('client-actions-row');
+                const actionsCell = actionsRow.insertCell();
+                actionsCell.colSpan = 5;
+                actionsCell.innerHTML = `
+                         <div class="client-action-buttons-horizontal">
+                             <button class="action-btn view-biodata-btn" data-id="${client.client_id}">Biodata</button>
+                             <button class="action-btn view-medical-history-btn" data-id="${client.client_id}">Med History</button>
+                             <!-- <button class="action-btn view-blood-tests-btn" data-id="${client.client_id}">Blood Tests</button> -->
+                             <button class="action-btn view-food-plan-btn" data-id="${client.client_id}">View Food Plan</button>
+                             <button class="action-btn view-follow-ups-btn" data-id="${client.client_id}">Follow-ups</button>
+                         </div>
+                 `;
+             });
+         }
+ 
+         clientsTableBody.addEventListener('click', async function(event) {
+             const target = event.target.closest('.action-btn');
+             if (!target) return;
+             const clientId = target.dataset.id;
+ 
+             if (target.classList.contains('view-biodata-btn')) {
+                 openViewClientBiodataModal(clientId);
+             } else if (target.classList.contains('view-medical-history-btn')) {
+                 openViewClientMedicalHistoryModal(clientId);
+             } else if (target.classList.contains('view-blood-tests-btn')) {
+                 openViewClientBloodTestsModal(clientId);
+             } else if (target.classList.contains('view-food-plan-btn')) {
+                 openClientFoodPlanModal(clientId);
+             } else if (target.classList.contains('view-follow-ups-btn')) {
+                 window.location.href = `compare.html?clientId=${clientId}`;
+             }
+         });
+ 
+         // --- Modal Opening Functions (adapted from nutritionist-dashboard.html) ---
+         async function openViewClientBiodataModal(clientId) {
+             viewClientBiodataModalTitle.textContent = `Personal Details for Client ID: ${clientId}`;
+             showMessage(viewClientBiodataMessageDiv, 'Loading...', 'info');
+             viewClientBiodataModal.style.display = 'block';
+             viewClientBiodataContentDiv.innerHTML = '';
+             try {
+                 // Executives use the same staff endpoint for viewing client details
+                 const response = await fetch(`api/staff/clients/${clientId}/personal-details`, { headers: { 'Authorization': `Bearer ${staffToken}` } });
+                 const data = await response.json();
+                 if (!response.ok) throw new Error(data.error || 'Failed to fetch');
+                 let contentHtml = '';
+                 for (const key in data) {
+                     if (data.hasOwnProperty(key)) {
+                         let value = data[key];
+                         const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                         if (key.includes('date') && value) value = new Date(value).toLocaleDateString();
+                         else if (typeof value === 'boolean') value = value ? 'Yes' : 'No';
+                         else if (value === null || value === undefined || value === '') value = 'N/A';
+                         contentHtml += `<div class="data-pair"><span class="data-label">${label}:</span><span class="data-value">${value}</span></div>`;
+                     }
+                 }
+                 viewClientBiodataContentDiv.innerHTML = contentHtml;
+                 showMessage(viewClientBiodataMessageDiv, 'Loaded.', 'info');
+             } catch (error) {
+                 showMessage(viewClientBiodataMessageDiv, error.message, 'error');
+             }
+         }
+ 
+         async function openViewClientMedicalHistoryModal(clientId) {
+             viewClientMedicalHistoryModalTitle.textContent = `Medical History for Client ID: ${clientId}`;
+             showMessage(viewClientMedicalHistoryMessageDiv, 'Loading...', 'info');
+             viewClientMedicalHistoryModal.style.display = 'block';
+             viewFamilyMedicalHistoryDiv.innerHTML = '';
+             viewClientMedicationsTableBody.innerHTML = '';
+             try {
+                 const response = await fetch(`api/staff/clients/${clientId}/medical-history/latest`, { headers: { 'Authorization': `Bearer ${staffToken}` } });
+                 const data = await response.json();
+                 if (!response.ok) throw new Error(data.error || 'Failed to fetch');
+                 if (data.message && data.message.includes("No medical history found")) {
+                     showMessage(viewClientMedicalHistoryMessageDiv, data.message, 'info');
+                 } else {
+                     viewFamilyMedicalHistoryDiv.innerHTML = data.family_medical_history ? data.family_medical_history.replace(/\n/g, '<br>') : 'N/A';
+                     if (data.medications && data.medications.length > 0) {
+                         data.medications.forEach(med => {
+                             const row = viewClientMedicationsTableBody.insertRow();
+                             row.innerHTML = `<td>${med.diagnosis||'N/A'}</td><td>${med.medicine_name||'N/A'}</td><td>${med.power||'N/A'}</td><td>${med.timing||'N/A'}</td><td>${med.since_when||'N/A'}</td>`;
+                         });
+                     } else {
+                         viewClientMedicationsTableBody.innerHTML = '<tr><td colspan="5">No medications listed.</td></tr>';
+                     }
+                     showMessage(viewClientMedicalHistoryMessageDiv, 'Loaded.', 'info');
+                 }
+             } catch (error) {
+                 showMessage(viewClientMedicalHistoryMessageDiv, error.message, 'error');
+             }
+         }
+ 
+         async function openViewClientBloodTestsModal(clientId) {
+             viewClientBloodTestsModalTitle.textContent = `Blood Tests for Client ID: ${clientId}`;
+             showMessage(viewClientBloodTestsMessageDiv, 'Loading...', 'info');
+             viewClientBloodTestsModal.style.display = 'block';
+             viewClientBloodTestReportDatesDiv.innerHTML = '';
+             viewClientBloodTestsTableContainer.innerHTML = '';
+             try {
+                 const response = await fetch(`api/staff/clients/${clientId}/blood-tests/latest`, { headers: { 'Authorization': `Bearer ${staffToken}` } });
+                 const data = await response.json();
+                 if (!response.ok) throw new Error(data.error || 'Failed to fetch');
+                 if (data.message && data.message.includes("No blood test reports found")) {
+                     showMessage(viewClientBloodTestsMessageDiv, data.message, 'info'); return;
+                 }
+                let table = buildReportsTable(data);
+                viewClientBloodTestsTableContainer.appendChild(table);
+                 showMessage(viewClientBloodTestsMessageDiv, 'Loaded.', 'info');
+             } catch (error) {
+                 showMessage(viewClientBloodTestsMessageDiv, error.message, 'error');
+             }
+         }
+ 
+         // --- Client Food Plan Modal (View Only for Executive) ---
+         function generateTimeSlotsForDisplay() { // For display purposes
+             const slots = [];
+             for (let i = 0; i < 24; i++) {
+                 const hour = (6 + i) % 24;
+                 slots.push({
+                     key: `${String(hour).padStart(2, '0')}:00`,
+                     displayValue: `${String(hour % 12 || 12).padStart(2, '0')}:00 ${hour >= 12 ? 'PM' : 'AM'}`
+                 });
+             }
+             return slots;
+         }
+ 
+         async function openClientFoodPlanModal(clientId) {
+             clientFoodPlanModalTitle.textContent = `View Food Plan for Client ID: ${clientId}`;
+             showMessage(clientFoodPlanMessageDiv, 'Loading food plan...', 'info');
+             clientFoodPlanModal.style.display = 'block';
+ 
+             clientFoodPlanHourlyDisplay.innerHTML = 'Loading hourly details...';
+             clientFoodPlanPersonalRecommendationsDisplay.innerHTML = 'Loading personal recommendations...';
+             clientFoodPlanGeneralAdminRecommendationsDisplay.innerHTML = 'Loading general recommendations...';
+ 
+             try { // Fetch general admin recommendations
+                 const genRecResponse = await fetch('api/general-food-recommendations', { headers: { 'Authorization': `Bearer ${staffToken}` } });
+                 if (genRecResponse.ok) {
+                     const genRecData = await genRecResponse.json();
+                     clientFoodPlanGeneralAdminRecommendationsDisplay.innerHTML = genRecData.recommendations || 'N/A';
+                 } else { clientFoodPlanGeneralAdminRecommendationsDisplay.innerHTML = 'Error loading general recs.'; }
+             } catch (error) { clientFoodPlanGeneralAdminRecommendationsDisplay.innerHTML = 'Error loading general recs.'; }
+ 
+             try { // Fetch client's latest food plan
+                 const response = await fetch(`api/staff/clients/${clientId}/food-plan/latest`, { headers: { 'Authorization': `Bearer ${staffToken}` } });
+                 const planData = await response.json();
+                 if (!response.ok) throw new Error(planData.error || 'Failed to load plan');
+ 
+                 if (planData.message && planData.message.includes("No food plan found")) {
+                     showMessage(clientFoodPlanMessageDiv, 'No food plan found for this client.', 'info');
+                     clientFoodPlanHourlyDisplay.innerHTML = 'No hourly details available.';
+                     clientFoodPlanPersonalRecommendationsDisplay.innerHTML = 'N/A';
+                 } else {
+                     clientFoodPlanPersonalRecommendationsDisplay.innerHTML = planData.additional_personal_recommendations || 'N/A';
+                     
+                     let hourlyHtml = '<table class="hourly-plan-table"><thead><tr><th class="time-column">Time</th><th>Present Intake</th><th>Proposed Structure</th><th>Additional Points</th></tr></thead><tbody>';
+                     const timeSlots = generateTimeSlotsForDisplay();
+                     const planDetailsMap = new Map(planData.hourly_details.map(d => [d.time_slot, d]));
+ 
+                     timeSlots.forEach(slot => {
+                         const detail = planDetailsMap.get(slot.key);
+                         hourlyHtml += `<tr>
+                             <td class="time-column"><div class="cell-content-wrapper">${slot.displayValue}</div></td>
+                             <td><div class="cell-content-wrapper">${detail?.present_intake || '-'}</div></td>
+                             <td><div class="cell-content-wrapper">${detail?.proposed_structure || '-'}</div></td>
+                             <td><div class="cell-content-wrapper">${detail?.additional_points || '-'}</div></td>
+                         </tr>`;
+                     });
+                     hourlyHtml += '</tbody></table>';
+                     clientFoodPlanHourlyDisplay.innerHTML = hourlyHtml;
+                     clientFoodPlanHourlyDisplay.scrollTop = 0; // Ensure it's scrolled to the top
+                     showMessage(clientFoodPlanMessageDiv, 'Client food plan loaded.', 'info');
+                 }
+             } catch (error) {
+                 showMessage(clientFoodPlanMessageDiv, error.message, 'error');
+                 clientFoodPlanHourlyDisplay.innerHTML = 'Error loading hourly details.';
+                 clientFoodPlanPersonalRecommendationsDisplay.innerHTML = 'Error loading.';
+             }
+         }
+ 
+         // --- Modal Close Handlers ---
+         function setupModalCloseButton(modalElement, closeButtonId) {
+             const closeBtn = document.getElementById(closeButtonId);
+             if (closeBtn) closeBtn.onclick = () => { modalElement.style.display = "none"; };
+         }
+         setupModalCloseButton(viewClientBiodataModal, 'closeViewClientBiodataModalBtn');
+         setupModalCloseButton(viewClientMedicalHistoryModal, 'closeViewClientMedicalHistoryModalBtn');
+         setupModalCloseButton(viewClientBloodTestsModal, 'closeViewClientBloodTestsModalBtn');
+         setupModalCloseButton(clientFoodPlanModal, 'closeClientFoodPlanModalBtn');
+ 
+         window.onclick = function(event) {
+             if (event.target == viewClientBiodataModal) viewClientBiodataModal.style.display = "none";
+             if (event.target == viewClientMedicalHistoryModal) viewClientMedicalHistoryModal.style.display = "none";
+             if (event.target == viewClientBloodTestsModal) viewClientBloodTestsModal.style.display = "none";
+             if (event.target == clientFoodPlanModal) clientFoodPlanModal.style.display = "none";
+         };
+         
+         document.querySelectorAll('.navbar-links a[href^="#"]').forEach(anchor => {
+             anchor.addEventListener('click', function (e) {
+                 e.preventDefault();
+                 const targetElement = document.querySelector(this.getAttribute('href'));
+                 if (targetElement) targetElement.scrollIntoView({ behavior: 'smooth' });
+             });
+         });
+ 
+         searchMyClientsFormExec.addEventListener('submit', async function(event) {
+             event.preventDefault();
+             console.log('Executive search form submitted!'); // Log 5
+             const formData = new FormData(this);
+             const searchParams = new URLSearchParams();
+             for (const [key, value] of formData.entries()) {
+                 if (value) { // only add params if they have a value
+                     searchParams.append(key, value);
+                 }
+             }
+             fetchEnrolledClients(searchParams.toString());
+         });
+ 
+         clearSearchMyClientsBtnExec.addEventListener('click', () => {
+             searchMyClientsFormExec.reset();
+             const url = new URL(window.location);
+             if (url.searchParams.has('filter')) {
+                 url.searchParams.delete('filter');
+                 window.history.pushState({}, '', url);
+             }
+             fetchEnrolledClients();
+         });
+ 
+         logoutButton.addEventListener('click', () => {
+             localStorage.removeItem('staffToken');
+             localStorage.removeItem('selectedRole');
+             window.location.href = 'login.html';
+         });
+ 
+         document.addEventListener('DOMContentLoaded', () => {
+             fetchEnrolledClients();
+         });
+     </script>
+ </body>
+ </html>
+ 

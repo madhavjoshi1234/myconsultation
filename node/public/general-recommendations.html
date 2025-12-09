@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage General Recommendations</title>
+    <script src="https://cdn.ckeditor.com/ckeditor5/41.1.0/classic/ckeditor.js"></script>
+    <link rel="stylesheet" href="admin_style.css">
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="admin-container">
+        <section id="generalFoodRecommendationsSection" class="management-section">
+            <h2>Manage General Food Recommendations</h2>
+            <p>These recommendations will be displayed to all clients on their food plan page.</p>
+            <form id="generalRecommendationsForm">
+                <div class="form-group" style="flex-direction: column; align-items: flex-start;">
+                    <label for="adminGeneralRecommendationsText" style="flex-basis: auto; margin-bottom: 8px;">Recommendations Text:</label>
+                    <textarea id="adminGeneralRecommendationsText" name="recommendations_text" rows="10"></textarea>
+                </div>
+                <button type="submit" class="submit-btn">Save General Recommendations</button>
+            </form>
+            <div id="adminGeneralRecsMessage" class="message-area"></div>
+        </section>
+    </main>
+
+    <script src="js/admin-navbar.js" defer></script>
+    <script>
+        const adminToken = localStorage.getItem('adminToken');
+        if (!adminToken) {
+            window.location.href = 'login.html';
+        }
+
+        const generalRecommendationsForm = document.getElementById('generalRecommendationsForm');
+        const adminGeneralRecsMessageDiv = document.getElementById('adminGeneralRecsMessage');
+        let generalRecommendationsEditor;
+
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = `message-area ${type}`;
+        }
+
+        async function initializeGeneralRecsEditor() {
+            try {
+                generalRecommendationsEditor = await ClassicEditor.create(document.querySelector('#adminGeneralRecommendationsText'));
+                const response = await fetch('api/general-food-recommendations', { headers: { 'Authorization': `Bearer ${adminToken}` } });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.recommendations) generalRecommendationsEditor.setData(data.recommendations);
+                } else {
+                    console.warn('Could not fetch existing general recommendations.');
+                }
+            } catch (error) {
+                console.error('Error initializing CKEditor for general recommendations:', error);
+                showMessage(adminGeneralRecsMessageDiv, 'Failed to load editor.', 'error');
+            }
+        }
+
+        generalRecommendationsForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const recommendations_text = generalRecommendationsEditor.getData();
+            showMessage(adminGeneralRecsMessageDiv, 'Saving...', 'info');
+            try {
+                const response = await fetch('api/admin/general-food-recommendations', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
+                    body: JSON.stringify({ recommendations_text })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || 'Save failed');
+                }
+                showMessage(adminGeneralRecsMessageDiv, result.message, 'success');
+            } catch (error) {
+                showMessage(adminGeneralRecsMessageDiv, error.message, 'error');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeGeneralRecsEditor();
+        });
+    </script>
+</body>
+</html>

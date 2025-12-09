@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Blood Test Results</title>
+    <link rel="stylesheet" href="client-navbar.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .test-table {
+            display: grid;
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .test-header-row,
+        .test-data-row {
+            display: grid;
+            grid-template-columns: 2.5fr 3fr repeat(5, 1fr);
+            /* Test Name, Normal Range, 5x Date Inputs */
+            /* border-bottom: 1px solid #e0e0e0; */
+            /* Border will be applied more selectively or to container */
+            align-items: center;
+            /* Vertically center items in cells */
+        }
+
+        .test-header-row>div {
+            padding: 12px 10px;
+            /* Increased padding */
+            font-weight: bold;
+            background-color: #f0f4f8;
+            text-align: left;
+            font-size: 0.9em;
+            border-left: 1px solid #e0e0e0;
+            border-top: 1px solid #e0e0e0;
+            /* Add top border to header cells */
+            box-sizing: border-box;
+            /* Ensure padding and border are inside the width */
+        }
+
+        .test-header-row:first-child>div {
+            /* For the very first header row (Test Name, Date text) */
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .test-header-row>div:first-child {
+            border-left: none;
+        }
+
+        .test-data-row>div {
+            padding: 10px;
+            /* Increased padding */
+            font-size: 0.9em;
+            border-left: 1px solid #e0e0e0;
+            min-height: 42px;
+            /* Ensure a minimum height for cells, accommodate inputs */
+            border-top: 1px solid #e0e0e0;
+            box-sizing: border-box;
+            /* Ensure padding and border are inside the width */
+        }
+
+        .test-data-row>div:first-child {
+            border-left: none;
+        }
+
+        .test-data-row:last-child {
+            border-bottom: none;
+        }
+
+        .test-data-row:nth-child(even) {
+            background-color: #fdfdfd;
+        }
+
+        .test-name {
+            font-weight: 500;
+        }
+
+        .normal-range {
+            color: #555;
+            font-style: italic;
+            font-size: 0.85em;
+        }
+
+        .test-data-row input[type="text"] {
+            width: 100%;
+            /* Make input take full cell width */
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-size: 0.9em;
+        }
+
+        /* General styling for date inputs in header/subheader rows */
+        input[type="text"].header-date-input {
+            width: 100%;
+            /* Make input fill its parent div (the grid cell) */
+            padding: 5px;
+            border: 1px solid #b0b0b0;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-size: 0.85em;
+            text-align: center;
+            background-color: #fff;
+            /* Ensure background is white */
+        }
+
+        /* Remove top border for the date input row's empty cells if it's also a .test-header-row */
+        .date-input-fields-row>div:nth-child(-n+2) {
+            /* Target first two empty cells */
+            border-top: none !important;
+            /* Ensure no top border for these specific empty cells */
+        }
+
+        .form-actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        button[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #218838;
+        }
+
+        #formMessage {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error-message {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .info-message {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Added for consistency */
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+
+            .test-header-row,
+            .test-data-row {
+                grid-template-columns: 1.5fr 2fr repeat(5, 0.8fr);
+                /* Adjust for smaller screens, 5 date inputs */
+            }
+
+            .test-header-row>div,
+            .test-data-row>div {
+                font-size: 0.8em;
+                padding: 6px 4px;
+            }
+
+            .test-data-row input[type="text"] {
+                font-size: 0.8em;
+                padding: 4px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .test-header-row,
+            .test-section-subheader {
+                display: none;
+            }
+
+            /* Hide header and subheader on very small screens */
+            .test-data-row {
+                grid-template-columns: 1fr;
+                /* Stack everything */
+                gap: 5px;
+                padding-bottom: 10px;
+                margin-bottom: 10px;
+            }
+
+            .test-data-row>div {
+                border-bottom: 1px dashed #eee;
+                padding-bottom: 5px;
+            }
+
+            .test-data-row>div:last-child {
+                border-bottom: none;
+            }
+
+            .test-data-row input[type="text"] {
+                width: 100%;
+            }
+
+            .test-data-row .normal-range::before {
+                content: "Normal: ";
+                font-weight: bold;
+            }
+
+            .test-data-row div[data-label]::before {
+                content: attr(data-label) ": ";
+                font-weight: bold;
+                display: inline-block;
+                min-width: 60px;
+            }
+        }
+
+        /* === START REPLACEMENT BLOCK: CSS for Section Sub-Headers === */
+        /* General style for all section sub-header rows */
+        .test-section-subheader {
+            display: grid;
+            grid-template-columns: 2.5fr 3fr repeat(5, 1fr);
+            /* Must match other rows */
+            align-items: center;
+            background-color: #e9ecef;
+            /* Distinct background for section title */
+        }
+
+        /* Style for individual cells within any section sub-header row */
+        .test-section-subheader>div {
+            font-weight: bold;
+            color: #0056b3;
+            /* Theme color for title */
+            font-size: 1em;
+            padding: 8px 10px;
+            border-top: 1px solid #e0e0e0;
+            border-left: 1px solid #e0e0e0;
+            box-sizing: border-box;
+            /* Ensure padding and border are inside the width */
+            min-height: 42px;
+            /* Match data row cells for vertical rhythm if inputs are present */
+        }
+
+        /* Style for the first cell (title cell) in any section sub-header row */
+        .test-section-subheader>div:first-child {
+            grid-column: 1 / span 2;
+            /* Title spans the first two columns */
+            text-align: left;
+            border-left: none;
+        }
+
+        /* Specific grid column placements for cells within the .cbc-subheader-row */
+        /* The first child (CBC title) is already handled by .test-section-subheader > div:first-child */
+        .cbc-subheader-row>div:nth-child(2) {
+            /* Container for the 1st date input */
+            grid-column: 3 / span 1 !important;
+            /* Start at col 3, span 1 col - !important for diagnosis */
+        }
+
+        .cbc-subheader-row>div:nth-child(3) {
+            /* Container for the 2nd date input */
+            grid-column: 4 / span 1;
+            /* Start at col 4, span 1 col */
+        }
+
+        .cbc-subheader-row>div:nth-child(4) {
+            /* Container for the 3rd date input */
+            grid-column: 5 / span 1;
+            /* Start at col 5, span 1 col */
+        }
+
+        .cbc-subheader-row>div:nth-child(5) {
+            /* Container for the 4th date input */
+            grid-column: 6 / span 1;
+            /* Start at col 6, span 1 col */
+        }
+
+        .cbc-subheader-row>div:nth-child(6) {
+            /* Container for the 5th date input */
+            grid-column: 7 / span 1;
+            /* Start at col 7, span 1 col */
+        }
+
+        /* Note: grid-column-end is not strictly necessary here if they each span 1 column by default */
+        /* and the grid-template-columns defines the column widths. */
+        /* === END REPLACEMENT BLOCK === */
+
+        #mainBloodTestHeaderContainer {
+            border-bottom: 1px solid #e0e0e0;
+            /* Add a bottom border to the main header block */
+            margin-bottom: -1px;
+            /* To overlap with the top border of the first section subheader or data row */
+        }
+
+        /* Rule to change cursor for disabled elements */
+        button:disabled,
+        input:disabled,
+        textarea:disabled,
+        select:disabled {
+            cursor: not-allowed !important;
+        }
+        .page-note {
+            margin-top: 15px;
+            margin-bottom: 25px;
+            padding: 12px;
+            background-color: #eef2f7;
+            border-left: 4px solid #0056b3;
+            font-size: 0.95em;
+            color: #333;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="navbar-placeholder"></div>
+    <div class="container">
+        <h1>Client Blood Test Results</h1>
+        <p class="page-note">This page is for entering new data only. To see your previous records, please click the 'History' button on the navigation bar.</p>
+
+        <form id="bloodTestForm">
+            <div id="mainBloodTestHeaderContainer"></div> <!-- Main header will be injected here -->
+
+            <!-- Helper function to create a test row -->
+            <script>
+                function createTestRow(testKey, testName, normalRange, parentElement) {
+                    const row = document.createElement('div');
+                    row.className = 'test-data-row';
+                    row.innerHTML = `
+                          <div class="test-name">${testName}</div>
+                          <div class="normal-range">${normalRange || 'N/A'}</div>
+                          <div><input type="text" name="${testKey}" data-label="Date"></div>
+                      `;
+                    parentElement.appendChild(row);
+                }
+                function createHeaderRow(parentElement) {
+                    const header = document.createElement('div');
+                    header.className = 'test-header-row';
+                    header.innerHTML = `
+                          <div>Test Name</div>
+                          <div>Normal Range</div>
+                         <div>Date</div>
+                      `;
+                    parentElement.appendChild(header);
+                }
+                function createSectionSubHeaderRow(title, sectionKey, parentElement) {
+                    const subHeader = document.createElement('div');
+                    subHeader.className = 'test-section-subheader';
+                    // For CBC, this row will also contain the global date input fields
+                    if (sectionKey === 'cbc') {
+                        subHeader.classList.add('cbc-subheader-row'); // Add specific class for CBC subheader
+                        subHeader.innerHTML = `
+                             <div>${title}</div> <!-- Title spans first two columns due to CSS -->
+                             <div><input type="text" name="report_date" placeholder="DD-MM-YYYY" class="header-date-input" aria-label="Date of Report 1"></div>
+                         `;
+                    } else { // For other sections, title row with blank spaces in date columns
+                        subHeader.innerHTML = `
+                             <div>${title}</div> <!-- Title spans first two columns due to CSS -->
+                             <div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div><div>&nbsp;</div> <!-- Blank spaces -->
+                         `;
+                    }
+                    parentElement.appendChild(subHeader);
+                }
+            </script>
+
+            <!-- CBC Section -->
+            <div class="test-table" id="cbc_tests">
+                <script>
+                    const cbcTable = document.getElementById('cbc_tests');
+                    createSectionSubHeaderRow('CBC', 'cbc', cbcTable); // Pass 'cbc' as sectionKey
+                    createTestRow('hemoglobin', 'HEMOGLOBIN', 'M= 13.5-18 GM/DL; F=12-16.8 GM/DL', cbcTable);
+                    createTestRow('total_wbc', 'TOTAL WBC', '4000-11000 /CMM', cbcTable);
+                    createTestRow('total_rbc', 'TOTAL RBC', '4.5-6 MIL/CMM', cbcTable);
+                    createTestRow('platelet', 'PLATELET', '150000-450000 /CMM', cbcTable);
+                    createTestRow('pcv', 'PCV', 'M - 40 TO 50 , F - 36 TO 46', cbcTable);
+                    createTestRow('mcv', 'MCV', '83 TO 101 FL', cbcTable);
+                    createTestRow('mch', 'MCH', '27-32 PG', cbcTable);
+                    createTestRow('mchc', 'MCHC', '32-36% G/DL', cbcTable);
+                    createTestRow('rdw', 'RDW', '11.5-14%', cbcTable);
+                    createTestRow('eosinophils', 'EOSINOPHILS', '0 - 6', cbcTable);
+                </script>
+            </div>
+
+            <!-- DIABETES INDICATOR Section -->
+            <div class="test-table" id="diabetes_tests">
+                <script>
+                    const diabetesTable = document.getElementById('diabetes_tests');
+                    createSectionSubHeaderRow('DIABETES INDICATOR', 'diabetes', diabetesTable); // Pass a different sectionKey
+                    createTestRow('fasting_glucose', 'FASTING BLOOD GLUCOSE', '70-110 MG/DL', diabetesTable);
+                    createTestRow('fasting_insulin', 'FASTING INSULIN', '2.6-37.6 MICRO U/ML', diabetesTable);
+                    createTestRow('hba1c_hplc', 'HbA 1 C (HPLC)', '&lt;/= 6.0 % OF TOTAL Hb', diabetesTable);
+                    createTestRow('hba1c_ifcc', 'HbA 1 C (IFCC) (HPLC)', '&lt;/= 42MMOL/MOL', diabetesTable);
+                    createTestRow('avg_plasma_glucose', 'AVG. PLASMA GLUCOSE OF LAST 3 MONTHS (CALC)', '80-140 MG/DL', diabetesTable);
+                </script>
+            </div>
+
+            <!-- KIDNEY FUNCTION TEST Section -->
+            <div class="test-table" id="kft_tests">
+                <script>
+                    const kftTable = document.getElementById('kft_tests');
+                    createSectionSubHeaderRow('KIDNEY FUNCTION TEST', 'kft', kftTable);
+                    createTestRow('uric_acid', 'URIC ACID', 'M-3.5 TO 7.2, F - 2.6 TO 6', kftTable);
+                    createTestRow('bun', 'BLOOD UREA NITROGEN ( BUN)', 'MG/DL 7.9 TO 20', kftTable);
+                    createTestRow('s_creatinine', 'S. CREATININE', 'M= 0.4-1.4 MG/DL; F= 0.2-1.2 MG/DL', kftTable);
+                    createTestRow('bun_creatinine_ratio', 'BUN / S CREATININE RATIO', '9.1 TO 23.1', kftTable);
+                    createTestRow('sodium', 'SODIUM', 'MMOL/L 136-146', kftTable);
+                    createTestRow('chloride', 'CHLORIDE', 'MMOL/L 98 - 106', kftTable);
+                    createTestRow('egfr', 'ESTIMATED GLOMERULAR FILTERATION RATE', '&gt;90, 60-90,45-59,30 -44, 15,29', kftTable);
+                </script>
+            </div>
+
+            <!-- LIVER FUNCTION TEST (LFT) Section -->
+            <div class="test-table" id="lft_tests">
+                <script>
+                    const lftTable = document.getElementById('lft_tests');
+                    createSectionSubHeaderRow('LIVER FUNCTION TEST (LFT)', 'lft', lftTable);
+                    createTestRow('bilirubin_total', 'S. BILIRUBIN-TOTAL', 'UP TO 1.2 MG/DL', lftTable);
+                    createTestRow('bilirubin_direct', 'S. BILIRUBIN-DIRECT', 'UP TO 0.4 MG/DL', lftTable);
+                    createTestRow('bilirubin_indirect', 'S. BILIRUBIN-INDIRECT', '0.1-1.0 MG/DL', lftTable);
+                    createTestRow('sgpt_alt', 'S.G.P.T.( ALT)', 'UP TO 40 U/L ( M - 13 TO 40 , F - 10 TO 28)', lftTable);
+                    createTestRow('sgot', 'S.G.O.T.', 'M - 0-37, F - 0 -31', lftTable);
+                    createTestRow('protein', 'PROTEIN', 'GM/DL 5.7 TO 8.2', lftTable);
+                    createTestRow('albumin', 'ALBUMIN', 'GM/DL  3.2 TO 4.8', lftTable);
+                    createTestRow('globulin', 'GLOBULIN', 'GM/DL 2,5 TO 3.4', lftTable);
+                    createTestRow('ag_ratio', 'ABUMIN/ GLOBULIN RATIO', '0.9 TO 2.0', lftTable);
+                </script>
+            </div>
+
+            <!-- LIPID PROFILE Section -->
+            <div class="test-table" id="lipid_tests">
+                <script>
+                    const lipidTable = document.getElementById('lipid_tests');
+                    createSectionSubHeaderRow('LIPID PROFILE', 'lipid', lipidTable);
+                    createTestRow('homocystin', 'HOMOCYSTIN', '1.0-15.39 UMOL/L ( &gt;30 RISK )', lipidTable);
+                    createTestRow('cholesterol', 'S.CHOLESTEROL', '125-200 MG/DL', lipidTable);
+                    createTestRow('triglyceride', 'S.TRIGLYCERIDE', '&lt;150', lipidTable);
+                    createTestRow('hdl', 'S.HDL', '35-70 MG/DL', lipidTable);
+                    createTestRow('ldl', 'S.LDL', '&lt;100 MG%', lipidTable);
+                    createTestRow('vldl', 'S.VLDL', '15-35 MG/DL', lipidTable);
+                    createTestRow('ldl_hdl_ratio', 'LDL/HDL RATIO', '&lt;3', lipidTable);
+                    createTestRow('chol_hdl_ratio', 'TOTAL CHOLESTEROL/HDL', '&lt;3.5', lipidTable);
+                </script>
+            </div>
+
+            <!-- INFLAMMATION Section -->
+            <div class="test-table" id="inflammation_tests">
+                <script>
+                    const inflammationTable = document.getElementById('inflammation_tests');
+                    createSectionSubHeaderRow('INFLAMMATION', 'inflammation', inflammationTable);
+                    createTestRow('crp', 'CRP', 'UP TO 6 MG/DL ( &lt;1, 1 TO 3 AND &gt;3)', inflammationTable);
+                </script>
+            </div>
+
+            <!-- VITAMIN D3 Section -->
+            <div class="test-table" id="vitamind3_tests">
+                <script>
+                    const vitamind3Table = document.getElementById('vitamind3_tests');
+                    createSectionSubHeaderRow('VITAMIN D3', 'vitamind3', vitamind3Table);
+                    createTestRow('vit_d3', '25 OH CHOLECALCIFEROL (D2+D3) (CMIA)', '20-32 NG/ML', vitamind3Table);
+                </script>
+            </div>
+
+            <!-- VITAMIN B12 Section -->
+            <div class="test-table" id="vitaminb12_tests">
+                <script>
+                    const vitaminb12Table = document.getElementById('vitaminb12_tests');
+                    createSectionSubHeaderRow('VITAMIN B12', 'vitaminb12', vitaminb12Table);
+                    createTestRow('vit_b12', 'B-12 LEVEL', '211-911 PG/ML', vitaminb12Table);
+                </script>
+            </div>
+
+            <!-- TESTOSTERONE Section -->
+            <div class="test-table" id="testosterone_tests">
+                <script>
+                    const testosteroneTable = document.getElementById('testosterone_tests');
+                    createSectionSubHeaderRow('TESTOSTERONE', 'testosterone', testosteroneTable);
+                    createTestRow('testosterone', 'TESTOSTERONE', 'M - 247 TO 827, F - 14 TO 76', testosteroneTable);
+                </script>
+            </div>
+
+            <!-- THYROID FUNCTION TEST Section -->
+            <div class="test-table" id="thyroid_tests">
+                <script>
+                    const thyroidTable = document.getElementById('thyroid_tests');
+                    createSectionSubHeaderRow('THYROID FUNCTION TEST', 'thyroid', thyroidTable);
+                    createTestRow('t3', 'T3', 'NG/DL 60 TO 200', thyroidTable);
+                    createTestRow('t4', 'T4', 'MUG/DL 4.5 TO 12', thyroidTable);
+                    createTestRow('tsh', 'TSH', 'MIU/ML  0.3 TO 5.5', thyroidTable);
+                </script>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit">Save Blood Test Results</button>
+            </div>
+        </form>
+        <div id="formMessage"></div>
+    </div>
+
+    <script src="js/client-navbar.js" defer></script>
+    <script>
+        // Place the single main header row at the top of the form
+        const mainHeaderContainer = document.getElementById('mainBloodTestHeaderContainer');
+        createHeaderRow(mainHeaderContainer);
+
+        const bloodTestFormElement = document.getElementById('bloodTestForm');
+        const saveBloodTestBtn = bloodTestFormElement.querySelector('button[type="submit"]');
+
+        // Global flag to be checked before submission
+        let isBloodTestFormEffectivelyReadOnly = false;
+
+        document.getElementById('bloodTestForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            if (isBloodTestFormEffectivelyReadOnly) {
+                // Use the formMessage div that's already part of the HTML structure
+                const formMessage = document.getElementById('formMessage');
+                formMessage.textContent = 'Your profile has been finalized. No new data can be saved.';
+                formMessage.className = 'error-message';
+                return; // Prevent submission if form is meant to be read-only
+            }
+
+            // When form is submitted, we assume changes will be saved or an error handled.
+            const formMessage = document.getElementById('formMessage');
+            formMessage.textContent = '';
+            formMessage.className = ''; // Clear previous message styling
+
+            const formData = new FormData(this);
+            const data = {};
+            // FormData doesn't easily group by test, so we iterate and structure
+            // This example just logs it, actual structuring might be more complex if needed
+            for (let [key, value] of formData.entries()) {
+                // For report_date_N fields, we always want to include them if they have a value,
+                // as they are general for the report columns.
+                // For test value fields (e.g. hemoglobin_d1), only include if they have a value.
+                if (key.startsWith('report_date_')) {
+                    if (value.trim() !== '') {
+                        data[key] = value;
+                    }
+                } else if (value.trim() !== '') {
+                    data[key] = value;
+                }
+            }
+
+            console.log('Blood test form data to be submitted (client-side):', JSON.stringify(data, null, 2)); // Log structured data
+
+            const token = localStorage.getItem('clientToken');
+            if (!token) {
+                formMessage.textContent = 'Error: Authentication token not found. Please log in again.';
+                formMessage.className = 'error-message';
+                return;
+            }
+
+            try {
+                const response = await fetch('api/client/blood-tests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) {
+                    const errorResult = await response.json().catch(() => ({ error: 'Failed to save blood test results. Server error.' }));
+                    throw new Error(errorResult.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                formMessage.textContent = result.message || 'Blood test results saved successfully!';
+                hasUnsavedChanges = false; // Reset flag on successful save
+                formMessage.className = 'success-message';
+                // this.reset(); // Optionally reset form if you want to clear it after successful submission
+
+                // Consider if you want to reset the form or parts of it.
+            } catch (error) {
+                formMessage.textContent = 'Error: ' + error.message;
+                formMessage.className = 'error-message';
+                console.error('Submission error:', error);
+            }
+        });
+
+        let hasUnsavedChanges = false;
+        // const form = document.getElementById('bloodTestForm'); // Already defined as bloodTestFormElement
+
+
+        // Function to fetch and populate latest blood test data
+        async function fetchAndPopulateLatestBloodTests() {
+            const token = localStorage.getItem('clientToken');
+            const formMessage = document.getElementById('formMessage');
+
+            if (!token) {
+                formMessage.textContent = 'Error: Authentication token not found. Please log in again.';
+                formMessage.className = 'error-message';
+                return;
+            }
+
+            let isProfileFinalized = false; // Flag to track finalization status
+            // First, check medical history finalization status
+            try {
+                const medHistoryResponse = await fetch('api/client/medical-history/latest', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const medHistoryData = await medHistoryResponse.json();
+
+                if (medHistoryResponse.ok && medHistoryData.is_finalized) {
+                    isProfileFinalized = true;
+                    // isBloodTestFormEffectivelyReadOnly is set in setBloodTestFormReadOnly
+                    formMessage.textContent = 'Your profile has been finalized and blood tests cannot be edited. Please contact support if changes are needed.';
+                    formMessage.className = 'info-message';
+                }
+            } catch (error) {
+                console.warn('Could not check medical history finalization status for blood tests page:', error);
+            }
+
+            try {
+                const response = await fetch('api/client/blood-tests/latest', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    const errorResult = await response.json().catch(() => ({ error: 'Failed to load latest blood test data. Server error.' }));
+                    throw new Error(errorResult.error || `HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('Received data for blood tests:', JSON.stringify(data, null, 2));
+
+                if (data.message && data.message === 'No blood test reports found for this client.') {
+                    if (!isProfileFinalized) { // Only update message if not already showing "finalized"
+                        formMessage.textContent = data.message;
+                        formMessage.className = 'info-message';
+                    }
+                    console.log(data.message);
+                    // Still call setBloodTestFormReadOnly in finally block
+                    return;
+                }
+
+                // Populate report dates
+                const dateKey = `report_date`;
+                const dateInputElement = bloodTestFormElement.elements[dateKey];
+                if (dateInputElement) {
+                    if (data[dateKey]) {
+                        const dateValue = data[dateKey].split('T')[0]; // Get YYYY-MM-DD part
+                        dateInputElement.value = dateValue;
+                        console.log(`Populating ${dateKey} with: ${dateValue}`);
+                    } else {
+                        console.log(`${dateKey} has no data or is null.`);
+                        dateInputElement.value = ''; // Clear if no data
+                    }
+                } else {
+                    console.warn(`Date input element ${dateKey} not found in form.`);
+                }
+
+                // Populate test results
+                if (data.results && Array.isArray(data.results)) { // Check if results exist and is an array
+                    data.results.forEach(result => {
+                        console.log(`Processing test_code: ${result.test_code}`);
+                        const valueKey = `value`;
+                        const inputName = `${result.test_code}`;
+                        const inputElement = bloodTestFormElement.elements[inputName];
+                        if (inputElement) {
+                            inputElement.value = result[valueKey] !== null ? result[valueKey] : '';
+                            console.log(`Populating ${inputName} with: ${inputElement.value}`);
+                        } else {
+                            console.warn(`Input element ${inputName} not found for test ${result.test_code}.`);
+                        }
+                    });
+                } else {
+                    console.log('No test results array found in the data to populate.');
+                }
+
+                if (!isProfileFinalized) { // Only update message if not already showing "finalized"
+                    formMessage.textContent = ' ';
+                    formMessage.className = 'success-message';
+                }
+
+            } catch (error) {
+                if (!isProfileFinalized) { // Only update message if not already showing "finalized"
+                    formMessage.textContent = 'Error loading blood test data: ' + error.message;
+                    formMessage.className = 'error-message';
+                }
+                console.error('Error fetching blood test data:', error);
+            } finally {
+                setBloodTestFormReadOnly(isProfileFinalized); // Set read-only based on the definitive flag
+            }
+        }
+
+        function setBloodTestFormReadOnly(isReadOnly) {
+            // Disable all text inputs within the form
+            console.log(`[setBloodTestFormReadOnly] Setting read-only: ${isReadOnly}`);
+            bloodTestFormElement.querySelectorAll('input[type="text"]').forEach(input => {
+                console.log(`[setBloodTestFormReadOnly] Disabling input: ${input.name}`);
+                input.disabled = isReadOnly;
+            });
+            // If you had other input types like 'date', 'number', or 'select', 'textarea', add similar loops here:
+            // bloodTestFormElement.querySelectorAll('input[type="date"]').forEach(input => input.disabled = isReadOnly);
+            // bloodTestFormElement.querySelectorAll('select').forEach(select => select.disabled = isReadOnly);
+            // bloodTestFormElement.querySelectorAll('textarea').forEach(textarea => textarea.disabled = isReadOnly);
+
+            if (saveBloodTestBtn) {
+                saveBloodTestBtn.disabled = isReadOnly;
+            }
+            isBloodTestFormEffectivelyReadOnly = isReadOnly; // Update global flag
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndPopulateLatestBloodTests(); // This will eventually call setBloodTestFormReadOnly
+        });
+
+        // Use event delegation for inputs within the form, especially in tables
+        bloodTestFormElement.addEventListener('input', function (event) { // Corrected 'form' to 'bloodTestFormElement'
+            // Check if the target is an input or textarea within the form and if the form is not read-only
+            if (isBloodTestFormEffectivelyReadOnly) return; // Don't track changes if read-only
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+                hasUnsavedChanges = true;
+            }
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (hasUnsavedChanges) {
+                // Standard way to trigger the browser's own confirmation dialog
+                e.preventDefault(); // For some older browsers
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?'; // Standard message
+                return 'You have unsaved changes. Are you sure you want to leave?'; // For some other browsers
+            }
+        });
+
+        // Add event listener to scroll the focused element into view
+        document.addEventListener('focusin', function(e) {
+            // Using a small timeout allows the browser to settle before we scroll
+            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    </script>
+</body>
+
+</html>

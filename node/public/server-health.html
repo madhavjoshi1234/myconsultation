@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Health Check</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <input type="password" name="token" id="token" placeholder="Enter Health Check Token">
+    <button id="checkHealth">Check Health</button>
+    <button id="setupDatabase">Setup Database</button>
+    <button id="showSchema">Show Schema</button>
+    <input type="text" name="search" id="search">
+    <pre id="status"></pre>
+    <div id="schema-container"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('healthCheckToken');
+            if (token) {
+                document.getElementById('token').value = token;
+            }
+        });
+        let logs = [];
+        let schema = null;
+        document.getElementById('checkHealth').addEventListener('click', async () => {
+            schema = null;
+            const token = document.getElementById('token').value;
+            const response = await fetch('api/health', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                document.getElementById('status').textContent = `Error: ${error.message}`;
+                return;
+            }
+            localStorage.setItem('healthCheckToken', token);
+            const result = await response.json();
+
+            logs = result.logs.reverse();
+            showLogs(logs);
+        });
+        document.getElementById('setupDatabase').addEventListener('click', async () => {
+            schema = null;
+            const token = document.getElementById('token').value;
+            const response = await fetch('api/setup', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                document.getElementById('status').textContent = `Error: ${error.message}`;
+                return;
+            }
+            localStorage.setItem('healthCheckToken', token);
+            const result = await response.json();
+
+            logs = result.logs.reverse();
+            showLogs(logs);
+        });
+        document.getElementById('showSchema').addEventListener('click', async () => {
+            const token = document.getElementById('token').value;
+            const response = await fetch('api/schema', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token })
+            });
+            if (!response.ok) {
+                const error = await response.json();
+                document.getElementById('status').textContent = `Error: ${error.message}`;
+                return;
+            }
+            localStorage.setItem('healthCheckToken', token);
+            const result = await response.json();
+
+            schema = result.schema;
+            // Display schema in a table
+            displaySchemaInTable();
+        });
+        function displaySchemaInTable() {
+            const container = document.getElementById('schema-container');
+            container.innerHTML = ''; // Clear previous content
+            const query = document.getElementById('search').value.toLowerCase();
+
+            for (const tableName in schema) {
+                if (schema.hasOwnProperty(tableName)) {
+                    const tableData = schema[tableName];
+                    let includeTable = tableName.toLowerCase().includes(query);
+
+                    if (!includeTable && tableData.columns) {
+                        for (const column of tableData.columns) {
+                            if (column.COLUMN_NAME.toLowerCase().includes(query)) {
+                                includeTable = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (includeTable) {
+                        // --- Table Name ---
+                        const tableHeader = document.createElement('h2');
+                        tableHeader.textContent = `Table: ${tableName}`;
+                        container.appendChild(tableHeader);
+
+                        // --- Columns Table ---
+                        const columnsHeader = document.createElement('h3');
+                        columnsHeader.textContent = 'Columns';
+                        container.appendChild(columnsHeader);
+                        const columnsTable = document.createElement('table');
+                        columnsTable.setAttribute('border', '1');
+                        columnsTable.style.width = '100%';
+                        columnsTable.style.borderCollapse = 'collapse';
+
+                        const colThead = document.createElement('thead');
+                        const colHeaderRow = document.createElement('tr');
+                        const colHeaders = ['Column Name', 'Data Type', 'Is Nullable', 'Column Key', 'Column Default', 'Extra'];
+                        colHeaders.forEach(headerText => {
+                            const th = document.createElement('th');
+                            th.textContent = headerText;
+                            th.style.border = '1px solid black';
+                            th.style.padding = '8px';
+                            th.style.textAlign = 'left';
+                            colHeaderRow.appendChild(th);
+                        });
+                        colThead.appendChild(colHeaderRow);
+                        columnsTable.appendChild(colThead);
+
+                        const colTbody = document.createElement('tbody');
+                        if (tableData.columns) {
+                            tableData.columns.forEach(column => {
+                                const row = document.createElement('tr');
+                                const cells = [
+                                    column.COLUMN_NAME,
+                                    column.COLUMN_TYPE,
+                                    column.IS_NULLABLE,
+                                    column.COLUMN_KEY,
+                                    column.COLUMN_DEFAULT,
+                                    column.EXTRA
+                                ];
+                                cells.forEach(cellData => {
+                                    const td = document.createElement('td');
+                                    td.textContent = cellData !== null && cellData !== undefined ? cellData : 'NULL';
+                                    td.style.border = '1px solid black';
+                                    td.style.padding = '8px';
+                                    row.appendChild(td);
+                                });
+                                colTbody.appendChild(row);
+                            });
+                        }
+                        columnsTable.appendChild(colTbody);
+                        container.appendChild(columnsTable);
+
+                        // --- Constraints Table ---
+                        if (tableData.constraints && tableData.constraints.length > 0) {
+                            const constraintsHeader = document.createElement('h3');
+                            constraintsHeader.textContent = 'Constraints';
+                            container.appendChild(constraintsHeader);
+
+                            const constraintsTable = document.createElement('table');
+                            constraintsTable.setAttribute('border', '1');
+                            constraintsTable.style.width = '100%';
+                            constraintsTable.style.borderCollapse = 'collapse';
+
+
+                            const conThead = document.createElement('thead');
+                            const conHeaderRow = document.createElement('tr');
+                            const conHeaders = ['Constraint Name', 'Column Name', 'Referenced Table', 'Referenced Column'];
+                            conHeaders.forEach(headerText => {
+                                const th = document.createElement('th');
+                                th.textContent = headerText;
+                                th.style.border = '1px solid black';
+                                th.style.padding = '8px';
+                                th.style.textAlign = 'left';
+                                conHeaderRow.appendChild(th);
+                            });
+                            conThead.appendChild(conHeaderRow);
+                            constraintsTable.appendChild(conThead);
+
+                            const conTbody = document.createElement('tbody');
+                            tableData.constraints.forEach(constraint => {
+                                const row = document.createElement('tr');
+                                const cells = [
+                                    constraint.CONSTRAINT_NAME,
+                                    constraint.COLUMN_NAME,
+                                    constraint.REFERENCED_TABLE_NAME,
+                                    constraint.REFERENCED_COLUMN_NAME
+                                ];
+                                cells.forEach(cellData => {
+                                    const td = document.createElement('td');
+                                    td.textContent = cellData !== null && cellData !== undefined ? cellData : 'NULL';
+                                    td.style.border = '1px solid black';
+                                    td.style.padding = '8px';
+                                    row.appendChild(td);
+                                });
+                                conTbody.appendChild(row);
+                            });
+                            constraintsTable.appendChild(conTbody);
+                            container.appendChild(constraintsTable);
+                        }
+                    }
+                }
+            }
+        }
+        document.getElementById('search').addEventListener('input', async (event) => {
+            if (schema) {
+                displaySchemaInTable();
+            } else {
+                const query = event.target.value;
+                if (query.length < 3) {
+                    document.getElementById('status').textContent = 'Please enter at least 3 characters to search.';
+                    return;
+                }
+                showLogs(logs);
+            }
+        });
+        function showLogs(logs) {
+            const query = document.getElementById('search').value.toLowerCase();
+            const filteredLogs = logs.filter(log => log.toLowerCase().includes(query));
+            document.getElementById('status').textContent = JSON.stringify(filteredLogs, null, 2);
+        }
+
+    </script>
+</body>
+
+</html>

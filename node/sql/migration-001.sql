@@ -1,0 +1,1 @@
+ALTER TABLE users ADD column `password_reset_token` varchar(255) DEFAULT NULL;

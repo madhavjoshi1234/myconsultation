@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        table,
+        tr,
+        th,
+        td {
+            border-collapse: collapse;
+            border: 1px solid silver;
+        }
+
+        th,
+        td {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 5px;
+            max-width: 400px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="list"></div>
+    <script>
+        async function loadData() {
+            return (await fetch('data.json').then(res => res.json()));
+        }
+        async function main() {
+            let data = await loadData();
+            let listEl = document.querySelector('#list');
+            listEl.appendChild(objectArrayToHtmlTable(data, ["id", "name", "sex", "age", "height"]));
+        }
+        function values(s) {
+            return Object.values(s).map(i => i === 'undefined' ? '' : `${i}`).join(' ~ ');
+        }
+
+        function objectArrayToHtmlTable(array, displayedColumns) {
+            let shown = new Set(displayedColumns);
+            let table = document.createElement('table');
+            let thead = document.createElement('thead');
+            let tbody = document.createElement('tbody');
+            let tr = document.createElement('tr');
+            let keys = Object.keys(array[0]);
+            keys.forEach(key => {
+                if (!shown.has(key)) {
+                    return;
+                }
+                let th = document.createElement('th');
+                th.textContent = key;
+                tr.append(th);
+            });
+            let th = document.createElement('th');
+            th.textContent = 'actions';
+            tr.append(th);
+            thead.append(tr);
+            table.append(thead);
+            array.forEach(item => {
+                let tr = document.createElement('tr');
+                keys.forEach(key => {
+                    if (Array.isArray(item[key])) {
+                        if (item[key].length > 0) {
+                            if (typeof item[key][0] === 'object') {
+                                item[key] = item[key].map(i => values(i)).join('\n');
+                            } else {
+                                item[key] = item[key].join('\n');
+                            }
+                        } else {
+                            item[key] = '';
+                        }
+                    } else if (typeof item[key] === 'object') {
+                        item[key] = Object.entries(item[key]).map(([k, v]) => `${k}: ${v}`).join('\n');
+                    }
+                    if (!shown.has(key)) {
+                        return;
+                    }
+                    let td = document.createElement('td');
+                    td.innerText = `${item[key]}`.replaceAll("undefined", "-");
+                    tr.append(td);
+                });
+                let td = document.createElement('td');
+                let button = document.createElement('button');
+                button.textContent = 'View Details';
+                button.onclick = () => {
+                    let allRows = document.querySelectorAll('tbody tr');
+                    allRows.forEach(row => row.style.backgroundColor = '');
+                    tr.style.backgroundColor = '#e0e0e0';
+                    document.body.style.overflow = 'hidden';
+                    let panel = document.createElement('div');
+                    let columnName = keys[td.cellIndex];
+                    panel.style.cssText = `
+                        position: fixed;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        background-color: white;
+                        border: 1px solid black;
+                        padding: 20px;
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                        z-index: 1000;
+                        white-space: pre-wrap;
+                        max-width: 80%;
+                        max-height: 90%;
+                        overflow: auto;
+                    `;
+                    keys.forEach(key => {
+                        let div = document.createElement('div');
+                        div.style.cssText = `
+                            font-weight: bold;
+                            margin-bottom: 3px;
+                        `;
+                        div.textContent = key;
+                        panel.appendChild(div);
+                        let pre = document.createElement('pre');
+                        pre.style.cssText = `
+                            border: 1px solid black;
+                            padding: 5px;
+                            margin-bottom: 10px;
+                            white-space: pre-wrap;
+                            line-height: 1.5;
+                        `
+                        pre.textContent = item[key];
+                        panel.appendChild(pre);
+                    });
+                    let closeButton = document.createElement('button');
+                    closeButton.textContent = 'Close';
+                    closeButton.style.cssText = `
+                        position: fixed;
+                        top: 10px;
+                        right: 10px;
+                        padding: 5px;
+                    `;
+                    let overlay = document.createElement('div');
+                    overlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background-color: rgba(0,0,0,0.5);
+                        z-index: 999;
+                    `;
+                    closeButton.onclick = () => {
+                        document.body.removeChild(panel);
+                        document.body.removeChild(overlay);
+                        document.body.style.overflow = 'auto';
+                    };
+                    overlay.onclick = () => closeButton.click();
+                    panel.appendChild(closeButton);
+                    document.body.appendChild(panel);
+                    document.body.appendChild(overlay);
+                };
+                td.appendChild(button);
+                tr.append(td);
+                tbody.append(tr);
+            });
+            table.append(tbody);
+            return table;
+        }
+        function replaceMultilineCellsWithPopup(tbody) {
+            let columns = new Set();
+            tbody.querySelectorAll('tr').forEach(tr => {
+                tr.querySelectorAll('td').forEach((td, i) => {
+                    if (!columns.has(i) && td.textContent.includes('\n')) {
+                        columns.add(i);
+                    }
+                });
+            });
+            tbody.querySelectorAll('tr').forEach(tr => {
+                tr.querySelectorAll('td').forEach((td, i) => {
+                    if (!columns.has(i)) {
+                        return;
+                    }
+                    let originalContent = td.textContent;
+                    td.textContent = '';
+                });
+            });
+        }
+        main();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Statistics</title>
+    <link rel="stylesheet" href="admin_style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="navbar-brand">Executive Dashboard</div>
+        <nav class="navbar-links">
+            <ul>
+                <li><a href="executive-dashboard.html">My Enrolled Clients</a></li>
+                <li><a href="executive-statistics.html" class="active">Statistics</a></li>
+                <li><button id="logoutButton" class="nav-logout-btn">Logout</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="admin-container">
+        <section id="statistics-section" class="management-section">
+            <h2>My Statistics</h2>
+            <div id="statsMessage" class="message-area"></div>
+            <div class="stats-cards-container">
+                <div class="stat-card clickable" onclick="window.location.href='executive-dashboard.html?filter=total_enrolled#enrolled-clients'">
+                    <h3>Total Enrolled Clients</h3>
+                    <p id="totalEnrolledClientsCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='executive-dashboard.html?filter=pending_activation#enrolled-clients'">
+                    <h3>Clients Pending Activation</h3>
+                    <p id="clientsPendingActivationCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='executive-dashboard.html?filter=final_history_submitted#enrolled-clients'">
+                    <h3>Final History Submitted</h3>
+                    <p id="finalHistorySubmittedCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='executive-dashboard.html?filter=food_plan_suggested#enrolled-clients'">
+                    <h3>Food Plan Suggested</h3>
+                    <p id="foodPlanSuggestedCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='executive-dashboard.html?filter=food_plan_sent#enrolled-clients'">
+                    <h3>Food Plan Sent</h3>
+                    <p id="foodPlanSentCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const staffToken = localStorage.getItem('staffToken');
+        if (!staffToken) {
+            window.location.href = 'login.html';
+        }
+
+        const statsMessageDiv = document.getElementById('statsMessage');
+        const logoutButton = document.getElementById('logoutButton');
+
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('staffToken');
+            localStorage.removeItem('selectedRole');
+            window.location.href = 'login.html';
+        });
+
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = `message-area ${type}`;
+        }
+
+        async function fetchWithAuth(url, options = {}) {
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    ...options.headers,
+                    'Authorization': `Bearer ${staffToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                return response;
+            }
+
+            const isJson = response.headers.get('content-type')?.includes('application/json');
+            let errorData = isJson ? await response.json().catch(() => ({})) : {};
+
+            if (response.status === 403 || response.status === 401) {
+                if (errorData.error && errorData.error.includes('Token verification failed')) {
+                    localStorage.removeItem('staffToken');
+                    localStorage.removeItem('selectedRole');
+                    alert('Your session has expired or is invalid. Please log in again.');
+                    window.location.href = 'login.html';
+                    throw new Error('SESSION_EXPIRED');
+                }
+            }
+            throw new Error(errorData.error || `Request failed with status ${response.status}`);
+        }
+
+        async function fetchStatistics() {
+            showMessage(statsMessageDiv, 'Loading statistics...', 'info');
+            try {
+                const response = await fetchWithAuth('api/executive/stats/counts');
+                const stats = await response.json();
+
+                document.getElementById('totalEnrolledClientsCount').textContent = stats.total_enrolled_clients_count || 0;
+                document.getElementById('clientsPendingActivationCount').textContent = stats.clients_pending_activation_count || 0;
+                document.getElementById('finalHistorySubmittedCount').textContent = stats.final_history_submitted_count || 0;
+                document.getElementById('foodPlanSuggestedCount').textContent = stats.food_plan_suggested_count || 0;
+                document.getElementById('foodPlanSentCount').textContent = stats.food_plan_sent_count || 0;
+                showMessage(statsMessageDiv, 'Statistics loaded.', 'success');
+            } catch (error) {
+                if (error.message !== 'SESSION_EXPIRED') {
+                    showMessage(statsMessageDiv, `Error loading statistics: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchStatistics);
+    </script>
+</body>
+</html>

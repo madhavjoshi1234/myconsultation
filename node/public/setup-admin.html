@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>First Admin Setup</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Create First Admin Account</h1>
+        <p>Use this form only once to create the initial administrator account. After creation, this page should be deleted or disabled.</p>
+        <form id="setupAdminForm">
+            <div class="form-group">
+                <label for="first_name">First Name:</label>
+                <input type="text" id="first_name" name="first_name" required>
+            </div>
+            <div class="form-group">
+                <label for="last_name">Last Name:</label>
+                <input type="text" id="last_name" name="last_name" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required minlength="8">
+            </div>
+            <button type="submit" class="submit-btn">Create Admin</button>
+        </form>
+        <div id="message" class="message-area"></div>
+    </div>
+
+    <script>
+        document.getElementById('setupAdminForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const first_name = document.getElementById('first_name').value;
+            const last_name = document.getElementById('last_name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+
+            messageDiv.textContent = 'Processing...';
+            messageDiv.className = 'message-area info';
+
+            try {
+                const response = await fetch('api/setup/first-admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ first_name, last_name, email, password })
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageDiv.textContent = result.message + ' You can now log in via the main login page.';
+                    messageDiv.className = 'message-area success';
+                    document.getElementById('setupAdminForm').reset();
+                } else {
+                    messageDiv.textContent = 'Error: ' + (result.error || 'Setup failed.');
+                    messageDiv.className = 'message-area error';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'An error occurred. Please check the server logs.';
+                messageDiv.className = 'message-area error';
+            }
+        });
+    </script>
+</body>
+</html>

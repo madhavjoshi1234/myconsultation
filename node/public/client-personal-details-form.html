@@ -1,0 +1,480 @@
+ <!DOCTYPE html>
+ <html lang="en">
+ <head>
+     <meta charset="UTF-8">
+     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+     <title>Client Personal Details</title>
+    <link rel="stylesheet" href="client-navbar.css">
+     <style>
+             /* Rule to change cursor for disabled elements */
+     button:disabled,
+     input:disabled,
+     textarea:disabled,
+     select:disabled {
+         cursor: not-allowed !important;
+     }
+
+         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
+         .container { max-width: 800px; margin: auto; background-color: #fff; padding: 25px; border-radius: 8px; box-shadow: 0 2px 15px rgba(0,0,0,0.1); }
+         h1 { color: #0056b3; text-align: center; margin-bottom: 30px; }
+         .form-grid {
+             display: grid;
+             grid-template-columns: 1fr; /* Default to single column */
+             gap: 25px; /* Increased gap slightly */
+         }
+ 
+         @media (min-width: 768px) { /* Apply two columns for screens wider than 768px */
+             .form-grid {
+                 grid-template-columns: 1fr 1fr; /* Explicitly two equal columns */
+             }
+         }
+ 
+         .form-group {
+             display: flex;
+             flex-direction: column;
+             /* background-color: #fdfdfd; Optional: subtle background for each group */
+             /* border: 1px solid #efefef;  Optional: subtle border for each group */
+             /* padding: 15px; Optional: padding if background/border is added */
+             /* border-radius: 4px; Optional: if background/border is added */
+         }
+         .form-group label {
+             font-weight: bold;
+             color: #4a5568; /* Slightly softer label color */
+             margin-bottom: 8px;
+         }
+         .form-group input[type="text"],
+         .form-group input[type="email"],
+         .form-group input[type="tel"],
+         .form-group input[type="number"],
+         .form-group input[type="date"],
+         .form-group select,
+         .form-group textarea {
+             width: 100%;
+             padding: 10px;
+             border: 1px solid #ccc;
+             border-radius: 4px;
+             box-sizing: border-box;
+             font-size: 15px; /* Slightly larger font in inputs */
+         }
+         .form-group textarea {
+             resize: vertical;
+             min-height: 80px;
+         }
+         .form-actions { text-align: center; margin-top: 30px; }
+         button[type="submit"] {
+             background-color: #007bff;
+             /* background-image: linear-gradient(to bottom, #007bff, #0069d9); Optional: gradient */
+             color: white;
+             padding: 12px 30px;
+             border: none;
+             border-radius: 5px;
+             cursor: pointer;
+             font-size: 16px;
+             transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+         }
+         button[type="submit"]:hover {
+             background-color: #0069d9; /* Darker shade on hover */
+         }
+         #formMessage { margin-top: 20px; padding: 10px; border-radius: 4px; text-align: center; }
+         .success-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+         .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+         .page-note {
+            margin-top: 15px;
+            margin-bottom: 25px;
+            padding: 12px;
+            background-color: #eef2f7;
+            border-left: 4px solid #0056b3;
+            font-size: 0.95em;
+            color: #333;
+            text-align: center;
+        }
+        .validation-message {
+            color: #dc3545; /* Red for errors */
+            font-size: 0.8em;
+            margin-top: 4px;
+            display: none; /* Hidden by default */
+        }
+     </style>
+ </head>
+ <body>
+    <div id="navbar-placeholder"></div>
+
+     <div class="container">
+         <h1>Client Personal Details</h1>
+         <p class="page-note">The client / Admin may update the data on this page if needed.</p>
+        <form id="personalDetailsForm">
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="firstName">First Name:</label>
+            <input type="text" id="firstName" name="first_name" required tabindex="1">
+            <div class="validation-message">This field is required.</div>
+        </div>
+        <div class="form-group">
+            <label for="lastName">Last Name:</label>
+            <input type="text" id="lastName" name="last_name" required tabindex="2">
+            <div class="validation-message">This field is required.</div>
+        </div>
+        <div class="form-group">
+            <label for="address1">Address 1:</label>
+            <input type="text" id="address1" name="address_1" tabindex="3">
+        </div>
+        <div class="form-group">
+            <label for="address2">Address 2:</label>
+            <input type="text" id="address2" name="address_2" tabindex="4">
+        </div>
+        <div class="form-group">
+            <label for="address3">Address 3:</label>
+            <input type="text" id="address3" name="address_3" tabindex="5">
+        </div>
+        <div class="form-group">
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city" tabindex="6">
+        </div>
+        <div class="form-group">
+            <label for="pincode">Pincode:</label>
+            <input type="text" id="pincode" name="pincode" pattern="\d{6}" title="Enter a 6-digit pincode" tabindex="7">
+        </div>
+        <div class="form-group">
+            <label for="mobile">Mobile:</label>
+            <input type="tel" id="mobile" name="mobile_number" pattern="\d{10,15}" title="Enter a valid mobile number" tabindex="8">
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required tabindex="9">
+            <div class="validation-message">A valid email is required.</div>
+        </div>
+        <div class="form-group">
+            <label for="height">Height (cms):</label>
+            <input type="number" id="height" name="height_cms" step="0.1" placeholder="e.g., 170.5" tabindex="10">
+        </div>
+        <div class="form-group">
+            <label for="weight">Weight (kg):</label>
+            <input type="number" id="weight" name="weight_kg" step="0.1" placeholder="e.g., 65.5" tabindex="11">
+        </div>
+        <div class="form-group">
+            <label for="age">Age (Completed Years):</label>
+            <input type="number" id="age" name="age_years" min="0" tabindex="12">
+        </div>
+        <div class="form-group">
+            <label for="gender">Male / Female:</label>
+            <select id="gender" name="gender" tabindex="13">
+                <option value="">-- Select --</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="maritalStatus">Single / Married:</label>
+            <select id="maritalStatus" name="marital_status" tabindex="14">
+                <option value="">-- Select --</option>
+                <option value="Single">Single</option>
+                <option value="Married">Married</option>
+                <option value="Divorced">Divorced</option>
+                <option value="Widowed">Widowed</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="shiftDuty">Shift Duty (Yes/No):</label>
+            <select id="shiftDuty" name="shift_duty" tabindex="15">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="jointFamily">Joint Family (Yes/No):</label>
+            <select id="jointFamily" name="joint_family" tabindex="16">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="vegetarian">Vegetarian (Yes/No):</label>
+            <select id="vegetarian" name="is_vegetarian" tabindex="17">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="dateOfPayment">Date of Payment:</label>
+            <input type="date" id="dateOfPayment" name="date_of_payment" tabindex="18">
+        </div>
+        <div class="form-group">
+            <label for="vegan">Vegan (Yes/No):</label>
+            <select id="vegan" name="is_vegan" tabindex="19">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="reference">Reference:</label>
+            <input type="text" id="reference" name="reference_source" tabindex="20">
+        </div>
+        <div class="form-group">
+            <label for="jain">Jain (Yes/No):</label>
+            <select id="jain" name="is_jain" tabindex="21">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="healthExecutive">Health Executive:</label>
+            <input type="text" id="healthExecutive" name="health_executive_name_display" readonly tabindex="22">
+        </div>
+        <div class="form-group">
+            <label for="lactoseIntolerance">Lactose Intolerance (Yes/No):</label>
+            <select id="lactoseIntolerance" name="has_lactose_intolerance" tabindex="23">
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+            </select>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="healthIssues">Health Issues:</label>
+            <textarea id="healthIssues" name="health_issues" placeholder="Describe any health issues..." tabindex="24"></textarea>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="foodLiking">Food Liking:</label>
+            <textarea id="foodLiking" name="food_liking" placeholder="List preferred foods..." tabindex="25"></textarea>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="foodDisliking">Food Disliking:</label>
+            <textarea id="foodDisliking" name="food_disliking" placeholder="List disliked foods..." tabindex="26"></textarea>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="jobDescription">Job Description:</label>
+            <textarea id="jobDescription" name="job_description" placeholder="Describe job responsibilities..." tabindex="27"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="jobTimings">Job Timings:</label>
+            <input type="text" id="jobTimings" name="job_timings" placeholder="e.g., 9 am to 5 pm" tabindex="28">
+        </div>
+        <div class="form-group">
+            <label for="sedentaryStatus">Sedentary Status:</label>
+            <select id="sedentaryStatus" name="sedentary_status" tabindex="29">
+                <option value="">-- Select --</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+                <option value="Partly">Partly</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="travellingFrequency">Travelling Frequency:</label>
+            <select id="travellingFrequency" name="travelling_frequency" tabindex="30">
+                <option value="">-- Select --</option>
+                <option value="No">No</option>
+                <option value="Sometimes">Sometimes</option>
+                <option value="Extensively">Extensively</option>
+            </select>
+        </div>
+    </div>
+    <div class="form-actions">
+        <button type="submit" tabindex="31">Save Personal Details</button>
+    </div>
+</form>
+
+         <div id="formMessage"></div>
+     </div>
+ 
+     <script src="js/client-navbar.js" defer></script>
+     <script>
+        // Get form and button elements once
+        const personalDetailsFormElement = document.getElementById('personalDetailsForm');
+        const savePersonalDetailsBtn = personalDetailsFormElement.querySelector('button[type="submit"]');
+
+        // Function to fetch and pre-fill existing client details
+        async function fetchAndPopulateClientDetails() {
+            const token = localStorage.getItem('clientToken');
+            if (!token) {
+                // Handle not logged in, perhaps redirect to login
+                document.getElementById('formMessage').textContent = 'Error: You are not logged in.';
+                document.getElementById('formMessage').className = 'error-message';
+                return;
+            }
+
+            // First, check medical history finalization status
+            try {
+                const medHistoryResponse = await fetch('api/client/medical-history/latest', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const medHistoryData = await medHistoryResponse.json();
+
+                if (medHistoryResponse.ok && medHistoryData.is_finalized) {
+                    setPersonalDetailsFormReadOnly(true);
+                    document.getElementById('formMessage').textContent = 'Your profile has been finalized and cannot be edited. Please contact support if changes are needed.';
+                    document.getElementById('formMessage').className = 'info-message';
+                    // If finalized, we might still want to load the data for viewing, so we continue.
+                }
+            } catch (error) {
+                console.warn('Could not check medical history finalization status:', error);
+            }
+
+            try {
+                const response = await fetch('api/client/me/personal-details', { // New GET endpoint needed
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    // Check for token expiry / auth failure specifically
+                    if ((response.status === 403 || response.status === 401)) {
+                        const errorResultCheck = await response.json().catch(() => ({})); // Try to parse error
+                        if (errorResultCheck.error && errorResultCheck.error.includes('Token verification failed')) {
+                            localStorage.removeItem('clientToken');
+                            alert('Your session has expired or is invalid. Please log in again.');
+                            window.location.href = 'client-login.html';
+                            return; // Stop further execution in this function
+                        }
+                    }
+                    const errorResult = await response.json().catch(() => ({ error: 'Failed to load your details.' }));
+                    throw new Error(errorResult.error || `HTTP error! status: ${response.status}`);
+                }
+                const clientData = await response.json();
+                // Populate the form fields
+                for (const key in clientData) {
+                    if (clientData.hasOwnProperty(key) && personalDetailsFormElement.elements[key]) {                        
+                        if (key === 'date_of_payment' && clientData[key]) {
+                            try {
+                                const dateValue = new Date(clientData[key]);
+                                if (!isNaN(dateValue.getTime())) { // Check if date is valid
+                                    const year = dateValue.getFullYear();
+                                    const month = String(dateValue.getMonth() + 1).padStart(2, '0'); // Month is 0-indexed
+                                    const day = String(dateValue.getDate()).padStart(2, '0');
+                                    personalDetailsFormElement.elements[key].value = `${year}-${month}-${day}`;
+                                } else {
+                                    personalDetailsFormElement.elements[key].value = ''; // Set to empty if date is invalid
+                                }
+                            } catch (e) {
+                                console.error("Error formatting date for key:", key, clientData[key], e);
+                                personalDetailsFormElement.elements[key].value = ''; // Fallback
+                            }
+                        } else {
+                            personalDetailsFormElement.elements[key].value = clientData[key] === null ? '' : clientData[key];
+                        }
+                    }
+                }
+                // Specifically populate the health executive display field with the fetched name
+                const healthExecutiveDisplayElement = document.getElementById('healthExecutive');
+                if (healthExecutiveDisplayElement) {
+                    // Use executive_name if available, otherwise show the default.
+                    healthExecutiveDisplayElement.value = clientData.executive_name ? clientData.executive_name : 'Madhav Joshi (Default)';
+                }
+                // If not finalized, show data loaded message (if not already showing finalized message)
+                if (!document.getElementById('formMessage').textContent.includes('finalized')) {
+                    document.getElementById('formMessage').textContent = ' ';
+                    document.getElementById('formMessage').className = 'info-message';
+                }
+            } catch (error) {
+                document.getElementById('formMessage').textContent = 'Error loading details: ' + error.message;
+                document.getElementById('formMessage').className = 'error-message';
+            }
+        }
+
+        function setPersonalDetailsFormReadOnly(isReadOnly) {
+            const formElements = personalDetailsFormElement.elements;
+            for (let i = 0; i < formElements.length; i++) {
+                // Don't disable the logout button if it were part of this form
+                if (formElements[i].type !== 'button' || formElements[i].id !== 'logoutButton') {
+                     formElements[i].disabled = isReadOnly;
+                }
+            }
+            // The submit button is part of formElements, so it's handled above.
+            // If you had other specific buttons outside the formElements collection, handle them here.
+        }
+         document.getElementById('personalDetailsForm').addEventListener('submit', async function(event) {
+            // When form is submitted, we assume changes will be saved or an error handled.
+             event.preventDefault();
+             const formMessage = document.getElementById('formMessage');
+             formMessage.textContent = '';
+             formMessage.className = ''; // Clear previous message styling
+ 
+             const formData = new FormData(this);
+             const data = Object.fromEntries(formData.entries());
+ 
+             console.log('Form data to be submitted:', data);
+ 
+            const token = localStorage.getItem('clientToken');
+            if (!token) {
+                formMessage.textContent = 'Error: Authentication token not found. Please log in again.';
+                formMessage.className = 'error-message';
+                return;
+            }
+ 
+             try {
+                const response = await fetch('api/client/personal-details', {
+                    method: 'POST', 
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+ 
+                if (!response.ok) {
+                    // Check for token expiry / auth failure specifically
+                    if ((response.status === 403 || response.status === 401)) {
+                        const errorResultCheck = await response.json().catch(() => ({})); // Try to parse error
+                        if (errorResultCheck.error && errorResultCheck.error.includes('Token verification failed')) {
+                            localStorage.removeItem('clientToken');
+                            alert('Your session has expired or is invalid. Please log in again to save your changes.');
+                            window.location.href = 'client-login.html';
+                            return; // Stop further execution
+                        }
+                    }
+                    const errorResult = await response.json().catch(() => ({ error: 'Failed to save details. Server error.' }));
+                    throw new Error(errorResult.error || `HTTP error! status: ${response.status}`);
+                }
+ 
+                const result = await response.json();
+                formMessage.textContent = result.message || 'Personal details saved successfully!';
+                hasUnsavedChanges = false; // Reset flag on successful save
+                 formMessage.className = 'success-message';
+                 // this.reset(); // Uncomment to reset form on success
+ 
+             } catch (error) {
+                 formMessage.textContent = 'Error: ' + error.message;
+                 formMessage.className = 'error-message';
+                 console.error('Submission error:', error);
+             }
+         });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAndPopulateClientDetails(); // Call this to load existing data
+            // Note: The health_executive_id and nutritionist_id might need special handling if they are select dropdowns populated from an API.
+        });
+        let hasUnsavedChanges = false;
+        // const form = document.getElementById('personalDetailsForm'); // Already defined as personalDetailsFormElement
+        personalDetailsFormElement.addEventListener('input', () => {
+            hasUnsavedChanges = true;
+        });
+
+        window.addEventListener('beforeunload', function (e) {
+            if (hasUnsavedChanges) {
+                // Standard way to trigger the browser's own confirmation dialog
+                e.preventDefault(); // For some older browsers
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?'; // Standard message
+                return 'You have unsaved changes. Are you sure you want to leave?'; // For some other browsers
+            }
+        });
+
+        // Add event listeners for on-blur validation
+        document.querySelectorAll('input[required]').forEach(input => {
+            input.addEventListener('blur', function() {
+                const validationMessage = this.nextElementSibling;
+                if (this.value.trim() === '') {
+                    validationMessage.style.display = 'block';
+                } else {
+                    validationMessage.style.display = 'none';
+                }
+            });
+        });
+
+        // Add event listener to scroll the focused element into view
+        document.addEventListener('focusin', function(e) {
+            // Using a small timeout allows the browser to settle before we scroll
+            setTimeout(() => {
+                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        });
+     </script>
+ </body>
+ </html>
+ 

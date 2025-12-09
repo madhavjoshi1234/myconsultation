@@ -1,0 +1,53 @@
+/* Navbar Styles */
+body {
+    padding-top: 70px; /* Adjust as needed to push content below fixed navbar */
+}
+.main-navbar {
+    background-color: #333;
+    overflow: hidden;
+    /* margin-bottom: 20px; */ /* No longer needed with fixed position */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1000;
+    box-sizing: border-box;
+}
+.main-navbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+}
+.main-navbar li {
+    display: inline-block;
+}
+.main-navbar li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 20px;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+.main-navbar li a:hover {
+    background-color: #555;
+}
+.main-navbar li a.active {
+    background-color: #007bff;
+}
+.main-navbar li a#logoutButton {
+    background-color: #dc3545;
+    margin-left: 10px;
+    border-radius: 4px;
+}
+.main-navbar li a#logoutButton:hover {
+    background-color: #c82333;
+}
+.main-navbar li span.nav-link-disabled {
+    display: block;
+    color: #999; /* Greyed out text */
+    text-align: center;
+    padding: 14px 20px;
+    cursor: help;
+}

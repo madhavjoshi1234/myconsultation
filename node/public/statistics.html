@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Statistics</title>
+    <link rel="stylesheet" href="admin_style.css">
+</head>
+<body>
+    <div id="navbar-placeholder"></div>
+
+    <main class="admin-container">
+        <section id="statistics-section" class="management-section">
+            <h2>System Statistics</h2>
+            <div id="statsMessage" class="message-area"></div>
+            <div class="stats-cards-container">
+                <div class="stat-card clickable" onclick="window.location.href='admin.html?filter=nutritionists#staff-section'">
+                    <h3>Total Nutritionists</h3>
+                    <p id="totalNutritionistsCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='admin.html?filter=executives#staff-section'">
+                    <h3>Total Executives</h3>
+                    <p id="totalExecutivesCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='manage-clients.html?filter=active_clients'">
+                    <h3>Total Active Clients</h3>
+                    <p id="totalClientsCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='manage-clients.html?filter=pending_activation'">
+                    <h3>Clients Pending Activation</h3>
+                    <p id="pendingActivationCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='manage-clients.html?filter=final_history_submitted'">
+                    <h3>Final History Submitted</h3>
+                    <p id="finalHistorySubmittedCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='manage-clients.html?filter=food_plan_suggested'">
+                    <h3>Food Plan Suggested</h3>
+                    <p id="foodPlanSuggestedCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+                <div class="stat-card clickable" onclick="window.location.href='manage-clients.html?filter=food_plan_sent'">
+                    <h3>Food Plan Sent</h3>
+                    <p id="foodPlanSentCount" style="font-size: 2em; font-weight: bold;">0</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/admin-navbar.js" defer></script>
+    <script>
+        const adminToken = localStorage.getItem('adminToken');
+        if (!adminToken) {
+            window.location.href = 'login.html';
+        }
+
+        const statsMessageDiv = document.getElementById('statsMessage');
+
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = `message-area ${type}`;
+        }
+
+        async function fetchStatistics() {
+            showMessage(statsMessageDiv, 'Loading statistics...', 'info');
+            try {
+                const response = await fetch('api/admin/stats/counts', {
+                    headers: { 'Authorization': `Bearer ${adminToken}` }
+                });
+
+                if (!response.ok) {
+                    if ((response.status === 403 || response.status === 401)) {
+                        const errorResultCheck = await response.json().catch(() => ({}));
+                        if (errorResultCheck.error && errorResultCheck.error.includes('Token verification failed')) {
+                            localStorage.removeItem('adminToken');
+                            alert('Your session has expired or is invalid. Please log in again.');
+                            window.location.href = 'login.html';
+                            return;
+                        }
+                    }
+                    throw new Error((await response.json()).error || 'Failed to fetch statistics');
+                }
+
+                const stats = await response.json();
+                document.getElementById('totalNutritionistsCount').textContent = stats.nutritionist_count || 0;
+                document.getElementById('totalExecutivesCount').textContent = stats.executive_count || 0;
+                document.getElementById('totalClientsCount').textContent = stats.client_count || 0;
+                document.getElementById('pendingActivationCount').textContent = stats.pending_activation_count || 0;
+                document.getElementById('finalHistorySubmittedCount').textContent = stats.final_history_submitted_count || 0;
+                document.getElementById('foodPlanSuggestedCount').textContent = stats.food_plan_completed_count || 0;
+                document.getElementById('foodPlanSentCount').textContent = stats.food_plan_sent_count || 0;
+                showMessage(statsMessageDiv, 'Statistics loaded.', 'success');
+
+            } catch (error) {
+                showMessage(statsMessageDiv, `Error: ${error.message}`, 'error');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchStatistics);
+    </script>
+</body>
+</html>
