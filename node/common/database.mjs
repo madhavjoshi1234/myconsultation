@@ -1,9 +1,8 @@
-import { decrypt } from "./decrypt.mjs";
 import mysql from 'mysql2/promise';
 import { writeLog } from "./utils.mjs";
 
 export async function startDatabase({ host, db, user, password, encryptionKey }) {
-  if (!host || !user || !password || !db || !encryptionKey) {
+  if (!host || !user || !password || !db) {
     writeLog('Missing database configuration in .env file.');
     process.exit(1);
   }
@@ -12,7 +11,7 @@ export async function startDatabase({ host, db, user, password, encryptionKey })
     pool = mysql.createPool({
       host: host || 'localhost', // Or your MySQL host
       user: user, // Your MySQL username
-      password: decrypt(password, encryptionKey), // Your MySQL password from environment variable
+      password: password, // Your MySQL password from environment variable
       database: db, // Your database name
       waitForConnections: true,
       connectionLimit: 10,
