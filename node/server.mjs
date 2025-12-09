@@ -26,6 +26,9 @@ app.use(express.json()); // Middleware for parsing JSON bodies
 // Create a folder named 'public' in your project root and put register.html and style.css there.
 app.use(express.static('public'));
 
+app.get('/', (req, res) => {
+    res.redirect('/login.html');
+});
 const router = express.Router();
 
 setupHealthRoute(router);
