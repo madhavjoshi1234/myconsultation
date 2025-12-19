@@ -1,4 +1,0 @@
----
-deployment:
-  tasks:
-    - /bin/cp -R node/* /home3/sevenpoi/staging.myconsultation.sevenpointfour.in/
