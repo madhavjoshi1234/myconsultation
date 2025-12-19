@@ -1,8 +1,6 @@
 ﻿---
 deployment:
   tasks:
-    - export DEPLOY_PATH=/home3/sevenpoi/nodeapps/staging_myconsultation
-    - echo "Running from $(pwd)"
-    - /bin/rsync -av --delete --exclude='.git' ./ $DEPLOY_PATH/
-    - /bin/npm install --production --prefix $DEPLOY_PATH/node
-    - /bin/touch $DEPLOY_PATH/tmp/restart.txt
+    - /usr/bin/git clean -fdx
+    - /bin/cp -R . /home3/sevenpoi/nodeapps/staging_myconsultation/
+    - /bin/npm install --prefix /home3/sevenpoi/nodeapps/staging_myconsultation/node
