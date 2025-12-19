@@ -15,3 +15,5 @@ https://sevenpointfour.in/consulttest/client-login.html
 
 https://sevenpointfour.in/consulttest/server-health.html
 - server-health-check-74
+
+This is a test change for Git deployment.
