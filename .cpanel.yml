@@ -2,6 +2,6 @@
 deployment:
   tasks:
     - /usr/bin/git clean -fdx
-    - export DEPLOYPATH=/home3/sevenpoi/nodeapps/staging_myconsultation/
-    - /bin/rsync -av --exclude='.git' ./ "${DEPLOYPATH}"
-    - /bin/npm install --prefix /home3/sevenpoi/nodeapps/staging_myconsultation/node
+    - export DEPLOYPATH=/home3/sevenpoi/nodeapps/staging_myconsultation
+    - /bin/cp -a . $DEPLOYPATH
+    - /bin/npm install --prefix $DEPLOYPATH/node
