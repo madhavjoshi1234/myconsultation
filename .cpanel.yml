@@ -2,5 +2,5 @@
 deployment:
   tasks:
     - /usr/bin/git clean -fdx
-    - /bin/rsync -av --exclude='.git' . /home3/sevenpoi/nodeapps/staging_myconsultation
+    - /bin/cp -a . /home3/sevenpoi/nodeapps/staging_myconsultation/
     - /bin/npm install --prefix /home3/sevenpoi/nodeapps/staging_myconsultation/node
