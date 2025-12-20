@@ -1,6 +1,6 @@
 ﻿---
 deployment:
   tasks:
-    - /bin/ls -la > /home3/sevenpoi/nodeapps/staging_myconsultation/debug_file_list.txt
+    - /bin/cp .cpanel.yml /home3/sevenpoi/nodeapps/staging_myconsultation/proof.txt
     - /bin/cp -a . /home3/sevenpoi/nodeapps/staging_myconsultation/
     - /bin/npm install --prefix /home3/sevenpoi/nodeapps/staging_myconsultation/node
